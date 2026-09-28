@@ -52,8 +52,9 @@ All notable changes to Vela, newest first.
   bar that had not closed yet — and keeps playing if it was.
   `chart.replay.bounds` tells how far back and forward a replay can go, and the `replay:*`
   events let an interface follow along. In the widget and the workspace, a replaying chart
-  shows a "Replay" line under its symbol watermark; the new Replay watermark switch in
-  chart settings (next to Symbol watermark) turns it off.
+  shows a "Replay" line under its symbol watermark (the new Replay watermark switch in
+  chart settings, next to Symbol watermark, turns it off), and its status line wears a
+  replay badge in place of the market status.
 - **Bar replay across a multi-chart layout.** `workspace.replay` rewinds every chart of a
   workspace at once and plays them back on one clock: each chart shows exactly the bars that
   had closed by the shared replay time, so charts on different timeframes or markets never
@@ -94,6 +95,12 @@ All notable changes to Vela, newest first.
   bearish and one band color, its Day anchor is now called Session, and it hides itself on
   daily and higher timeframes unless you turn that guard off. The Moving Average type
   `RMA` is now listed as `RMA (SMMA)`, though charts saved with the old name still load.)_
+
+### Fixed
+
+- **The status line's ticker no longer stands apart from its venue.** The dot after the
+  ticker now sits one space away from it, as far as the venue sits after the dot, instead
+  of a wide gap.
 
 ## [v0.7.7]
 

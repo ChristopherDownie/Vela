@@ -463,7 +463,9 @@ they work from the very first keystroke, before any click.
   venue/timeframe beside it) plus hide/show for the chart's price series. In
   multi-cell grids it stays on one row — segments that don't fit the cell hide instead
   of wrapping (bar change first, then venue/timeframe, then the market badge; the logo
-  + ticker always stay).
+  + ticker always stay). While the chart replays past bars, the market badge gives way to
+  a replay badge (the replay icon on the inverse chip), and the market status returns when
+  the replay ends.
 - **Object tree** — a docked panel grouping every item under the pane it belongs to. Each pane is
   one column read top to bottom as front to back: its drawings, its indicators and, in the main
   pane, the price series, all in draw order — new indicators and new drawings both start under
