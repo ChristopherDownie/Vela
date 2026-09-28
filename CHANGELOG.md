@@ -2,6 +2,68 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Added
+
+- **Bar replay.** `chart.replay` rewinds the chart to any past bar and plays the following
+  bars back one at a time — by hand with `step()`, or on a timer with `play(intervalMs)` at
+  the pace you choose. Indicators update as each bar appears, exactly as they would live,
+  while their alerts stay quiet — a replayed bar is history, not a signal to act on —
+  and live updates wait until you `stop()` or the replay reaches the present; the chart then
+  shows the full history again and catches up on what it missed. Starting further back than
+  the loaded history loads the older bars first (the chart returns to its usual depth
+  afterwards), and calling `start()` again while replaying jumps backward or forward. A
+  start inside the bars already on screen is immediate, even while the source is still
+  streaming older history in; that history joins the replay as it lands. Switching the
+  timeframe keeps the replay going at the same point in time — without showing a coarser
+  bar that had not closed yet — and keeps playing if it was.
+  `chart.replay.bounds` tells how far back and forward a replay can go, and the `replay:*`
+  events let an interface follow along. In the widget and the workspace, a replaying chart
+  shows a "Replay" line under its symbol watermark (the new Replay watermark switch in
+  chart settings, next to Symbol watermark, turns it off), and its status line wears a
+  replay badge in place of the market status.
+- **Bar replay across a multi-chart layout.** `workspace.replay` rewinds every chart of a
+  workspace at once and plays them back on one clock: each chart shows exactly the bars that
+  had closed by the shared replay time, so charts on different timeframes or markets never
+  reveal the future to one another, and the finest timeframe sets the pace. Charts added to
+  the layout join the replay, a chart switching symbol rejoins it, and it ends on every
+  chart together. Contributions drive it as `ctx.replay`.
+- **Tick replay.** `chart.replay.setTicks(source)` plays each revealed bar the way a live
+  one forms: your source hands over the bar's intrabar updates, and the candle opens, moves
+  and stretches through them before settling exactly on the stored bar, with indicators
+  following every update. The play pace then counts updates, not bars. Updates can come
+  from anywhere; `lowerTimeframeTicks(chart, '1')` builds them from the chart's own
+  provider, one per finer bar. `stepUpdate()` reveals one update at a time, and the new
+  `replay:tick` event reports progress within a bar.
+- **Building blocks for pick-a-point interactions.** The UI kit gains `DatePicker`, the
+  month calendar with month and year jumps in its header that indicator date inputs
+  already use, now available to your own interfaces. The new `crosshairOverride` renderer
+  feature restyles the crosshair while the user picks something on the chart — a solid
+  line in your color, the horizontal level hidden, and optionally the area after it veiled
+  (`shadeRight`) — without touching the saved chart settings. A synced crosshair from
+  another chart takes the same look, so a pick can span several charts.
+- **Plugins can dock a strip under the charts.** `ctx.dockStrip(el)` on the widget context
+  places your element as a full-width strip between the charts and the bottom bar; the
+  charts shrink to make room, and the returned function takes it away again.
+- **Plugins choose where an action sits on mobile, and hear taps.** A topbar action's new
+  `mobile` option puts it on the bottom bar or in the three-dots menu (a primary action
+  lands right after Layout there). `chart.renderer.onClick` reports a click or a touch tap
+  on the plot with the bar under it — on touch, where a tap moves no crosshair, the way
+  to learn which bar was chosen.
+
+### Changed
+
+- **Reading history no longer gets interrupted by new bars.** When the newest bar is
+  scrolled off the right edge, a new bar (live or replayed) leaves the view on the bars
+  you were looking at; at the right edge, the chart keeps following the newest bar.
+
+### Fixed
+
+- **The status line's ticker no longer stands apart from its venue.** The dot after the
+  ticker now sits one space away from it, as far as the venue sits after the dot, instead
+  of a wide gap.
+
 ## [0.7.8]
 
 ### Fixed
