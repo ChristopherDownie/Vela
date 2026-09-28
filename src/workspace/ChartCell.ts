@@ -231,6 +231,8 @@ export class ChartCell {
     activeRangeId: string | null = null;
     /** Latched verdict of {@link sessionAvailable} (async metadata, sticky per symbol). */
     private sessionAvailableFlag = false;
+    /** The symbol of the most recent metadata probe — an older one landing late is dropped. */
+    private metadataProbeSymbol: string | null = null;
     /** Latched: the symbol's extended tape wraps midnight (an overnight roll market) —
      *  one extended-hours shading phase instead of the pre/post split. */
     private sessionOvernightFlag = false;
@@ -423,7 +425,14 @@ export class ChartCell {
             this.deps.toast(`No registered provider serves "${symbol}" (registered: ${list})`, 'error', 6000);
         });
         // The loading affordance and the watermark never share the canvas.
-        this.inner.on('load:start', () => this.watermark?.setLoading(true));
+        this.inner.on('load:start', ({ symbol }) => {
+            this.watermark?.setLoading(true);
+            // Probe the new symbol's metadata HERE rather than waiting for `market:changed`
+            // (which fires only once the new bars are painted): the session toggle and the
+            // exchange zone then settle while the bars load instead of a beat after them.
+            // The committed pass below re-runs idempotently and remains the backstop.
+            this.refreshSymbolMetadata(symbol);
+        });
         this.inner.on('load:end', () => {
             this.watermark?.setLoading(false);
             this.refreshSessionShading(); // the first painted bars now define the exact range
@@ -633,12 +642,26 @@ export class ChartCell {
 
     /** Re-read the symbol's metadata: session posture (RTH/ETH toggle, shading) and its
      *  trading zone (the exchange rule). Async — the workspace re-projects when a verdict lands. */
-    private refreshSymbolMetadata(): void {
+    private refreshSymbolMetadata(symbol = this.state.symbol, retry = true): void {
         const chart = this.inner;
-        const symbol = this.state.symbol;
         if (!chart || !symbol) return;
+        this.metadataProbeSymbol = symbol; // last ask wins — a slow probe must not overwrite a newer verdict
         void chart.data.symbolInfo(symbol).then((si) => {
-            if (this.inner !== chart) return;
+            if (this.inner !== chart || this.metadataProbeSymbol !== symbol) return;
+            if (si === undefined && retry) {
+                // Nothing resolved the symbol yet: the EARLY pass can precede the provider
+                // indexes (the bar load itself awaits them, which is why the committed pass
+                // never saw this). Ask again once they settle, then give up — the
+                // `market:changed` pass is the backstop.
+                void chart.data.ready().then(() => {
+                    if (this.inner === chart && this.metadataProbeSymbol === symbol) this.refreshSymbolMetadata(symbol, false);
+                });
+                return;
+            }
+            // The cell's own state may not carry this symbol yet — host code calling
+            // `chart.setMarket` directly projects it only at `market:changed`, and the
+            // overlays below (shading, settings) read the cell state. That pass follows.
+            if (this.state.symbol !== symbol) return;
             const available = typeof si?.session === 'string' && si.session !== '' && si.session !== '24x7';
             const overnight = parseSessionSpec(si)?.overnight === true;
             const zone = typeof si?.timezone === 'string' && si.timezone !== '' ? si.timezone : undefined;

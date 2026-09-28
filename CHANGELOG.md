@@ -4,6 +4,17 @@ All notable changes to Vela, newest first.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The RTH/ETH switch and the exchange time zone appear as the chart loads, not after it.**
+  Picking a market with trading sessions used to leave the bottom bar's session switch
+  hidden until the new candles had finished loading, plus a further round trip — the
+  metadata that decides it was fetched again, from scratch, once everything else was done.
+  The symbol's metadata is now read while the candles load, and the five things that need
+  it (the price scale's tick size, the market-status badge, the session shading, the
+  session switch, the time zone) share a single request whose answer is reused for ten
+  minutes. A switch that used to open five identical requests now opens one.
+
 ### Added
 
 - **Exchange in the chart settings' Time zone row.** In the widget and workspace, the Symbol
