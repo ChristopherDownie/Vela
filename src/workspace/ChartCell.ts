@@ -37,7 +37,7 @@ import {
 } from '../widget/contributions';
 import { prefixedSymbol, type CellState } from '../state/document';
 import { parseSymbol } from '../data/ProviderRegistry';
-import { normalizeTimezone, resolveTimezone } from '../core/timezones';
+import { isExchangeTimezone, normalizeTimezone, resolveTimezone, timezoneMenuRows } from '../core/timezones';
 import { applyPlotOverlayTokens } from '../ui';
 
 /** The seed/mutable market state of one cell (all optional — an empty cell parks).
@@ -231,6 +231,8 @@ export class ChartCell {
     activeRangeId: string | null = null;
     /** Latched verdict of {@link sessionAvailable} (async metadata, sticky per symbol). */
     private sessionAvailableFlag = false;
+    /** The symbol of the most recent metadata probe — an older one landing late is dropped. */
+    private metadataProbeSymbol: string | null = null;
     /** Latched: the symbol's extended tape wraps midnight (an overnight roll market) —
      *  one extended-hours shading phase instead of the pre/post split. */
     private sessionOvernightFlag = false;
@@ -335,6 +337,10 @@ export class ChartCell {
                 // The user's drawings option minus its toolbar: one SHARED bar serves
                 // the whole workspace (per-cell bars would cost a 44px gutter each).
                 drawings: cellDrawings(deps.chartDefaults.drawings),
+                // The renderer's own Time zone row edits a resolved IANA zone; the cell
+                // contributes the workspace picker instead (`time-zone`, with the
+                // exchange rule — see pushSettingsSections).
+                settings: { ...deps.chartDefaults.settings, hidden: [...(deps.chartDefaults.settings?.hidden ?? []), 'symbol.timezone'] },
             },
             { dataFeed: deps.feed },
         );
@@ -356,7 +362,7 @@ export class ChartCell {
         // keymap pops an unrelated cell entry).
         if (this.inner.renderer.supports('historyChords')) this.inner.renderer.set('historyChords', false);
         this.history.onChart(this.inner);
-        // The renderer's settings dialog owns a Time zone row too (it commits through
+        // A config document can carry a time zone too (a template import, a headless
         // applyConfig) — mirror it back so the workspace bottom bar, the other cells and
         // the persisted state never disagree with this cell's axis. `renderer.set` is a
         // feature write, not an applyConfig, so adopting the value cannot loop. The
@@ -419,7 +425,14 @@ export class ChartCell {
             this.deps.toast(`No registered provider serves "${symbol}" (registered: ${list})`, 'error', 6000);
         });
         // The loading affordance and the watermark never share the canvas.
-        this.inner.on('load:start', () => this.watermark?.setLoading(true));
+        this.inner.on('load:start', ({ symbol }) => {
+            this.watermark?.setLoading(true);
+            // Probe the new symbol's metadata HERE rather than waiting for `market:changed`
+            // (which fires only once the new bars are painted): the session toggle and the
+            // exchange zone then settle while the bars load instead of a beat after them.
+            // The committed pass below re-runs idempotently and remains the backstop.
+            this.refreshSymbolMetadata(symbol);
+        });
         this.inner.on('load:end', () => {
             this.watermark?.setLoading(false);
             this.refreshSessionShading(); // the first painted bars now define the exact range
@@ -629,12 +642,26 @@ export class ChartCell {
 
     /** Re-read the symbol's metadata: session posture (RTH/ETH toggle, shading) and its
      *  trading zone (the exchange rule). Async — the workspace re-projects when a verdict lands. */
-    private refreshSymbolMetadata(): void {
+    private refreshSymbolMetadata(symbol = this.state.symbol, retry = true): void {
         const chart = this.inner;
-        const symbol = this.state.symbol;
         if (!chart || !symbol) return;
+        this.metadataProbeSymbol = symbol; // last ask wins — a slow probe must not overwrite a newer verdict
         void chart.data.symbolInfo(symbol).then((si) => {
-            if (this.inner !== chart) return;
+            if (this.inner !== chart || this.metadataProbeSymbol !== symbol) return;
+            if (si === undefined && retry) {
+                // Nothing resolved the symbol yet: the EARLY pass can precede the provider
+                // indexes (the bar load itself awaits them, which is why the committed pass
+                // never saw this). Ask again once they settle, then give up — the
+                // `market:changed` pass is the backstop.
+                void chart.data.ready().then(() => {
+                    if (this.inner === chart && this.metadataProbeSymbol === symbol) this.refreshSymbolMetadata(symbol, false);
+                });
+                return;
+            }
+            // The cell's own state may not carry this symbol yet — host code calling
+            // `chart.setMarket` directly projects it only at `market:changed`, and the
+            // overlays below (shading, settings) read the cell state. That pass follows.
+            if (this.state.symbol !== symbol) return;
             const available = typeof si?.session === 'string' && si.session !== '' && si.session !== '24x7';
             const overnight = parseSessionSpec(si)?.overnight === true;
             const zone = typeof si?.timezone === 'string' && si.timezone !== '' ? si.timezone : undefined;
@@ -757,6 +784,27 @@ export class ChartCell {
                 },
             ],
         };
+        // Replaces the renderer's Time zone group (hidden at construction): the same rows
+        // as the bottom bar — UTC, the exchange rule, the catalog — writing the workspace
+        // CHOICE, so picking Exchange never reaches the renderer as a zone.
+        const timezoneSection = {
+            title: 'Time zone',
+            id: 'time-zone',
+            placement: 'symbol' as const,
+            rows: [
+                {
+                    kind: 'select' as const,
+                    label: 'Time zone',
+                    id: 'zone',
+                    options: timezoneMenuRows(this.deps.timezone()).map((r) => [r.value, r.label] as const),
+                    get: () => {
+                        const choice = this.deps.timezone();
+                        return isExchangeTimezone(choice) ? choice : normalizeTimezone(choice);
+                    },
+                    set: (v: string) => this.deps.setTimezone(v),
+                },
+            ],
+        };
         const watermarkSection = {
             title: 'Watermark',
             id: 'watermark',
@@ -825,7 +873,7 @@ export class ChartCell {
                 ],
             });
         }
-        sections.push(advanced);
+        sections.push(advanced, timezoneSection);
         if (this.sessionAvailableFlag) sections.push(sessionSection);
         sections.push(watermarkSection);
         chart.renderer.setSettingsSections(sections);

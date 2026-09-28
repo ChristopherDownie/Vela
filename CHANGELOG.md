@@ -2,6 +2,68 @@
 
 All notable changes to Vela, newest first.
 
+## [0.7.8]
+
+### Fixed
+
+- **The RTH/ETH switch and the exchange time zone appear as the chart loads, not after it.**
+  Picking a market with trading sessions used to leave the bottom bar's session switch
+  hidden until the new candles had finished loading, plus a further round trip — the
+  metadata that decides it was fetched again, from scratch, once everything else was done.
+  The symbol's metadata is now read while the candles load, and the five things that need
+  it (the price scale's tick size, the market-status badge, the session shading, the
+  session switch, the time zone) share a single request whose answer is reused for ten
+  minutes. A switch that used to open five identical requests now opens one.
+
+### Added
+
+- **Exchange in the chart settings' Time zone row.** In the widget and workspace, the Symbol
+  tab's Time zone dropdown is now the same picker as the bottom bar — UTC, **Exchange**, then
+  the catalog — so following the market is one pick away from the settings dialog too. The
+  row writes the workspace choice (it never demotes the rule to a fixed zone); its
+  visibility id is `time-zone` (`settings.hidden`). Host settings sections
+  (`setSettingsSections`) may now give a `select` row `[value, label]` options.
+- **Every built-in indicator is now fully styleable.** Each study splits its settings into
+  a **Settings** and a **Style** section, and every element it draws gets its own color:
+  Bollinger Bands ink the basis, the bands and the fill separately, MACD's histogram has
+  four colors for rising and falling on each side of zero, and the moving averages,
+  channels and cumulative volume lines can be colored by their own slope or by which side
+  of the line price is trading. Every setting carries a tooltip explaining what it does.
+- **Overbought and oversold levels are inputs, not fixed lines.** RSI, Stochastic,
+  Stochastic RSI, Williams %R, Money Flow Index, Connors RSI, the Chande Momentum
+  Oscillator, the Ultimate Oscillator and the Relative Volatility Index all let you move
+  their thresholds, and the shaded zones, dashed level lines and line coloring follow. The
+  bounded oscillators blend their line from the oversold color through neutral to the
+  overbought color, and shade the region beyond each threshold; the centered ones wash the
+  area between the reading and the zero line, fading out where the two meet.
+- **More moving averages and more display modes.** The Moving Average study offers
+  thirteen smoothings — adding Hull, Arnaud Legoux, double and triple exponential,
+  Kaufman adaptive, least-squares, McGinley and Hamming — plus an optional second average
+  with its own type, length, source and color. Linear Regression can plot its curve or its
+  slope; Rate of Change can plot a percentage or a raw momentum difference; SMI Ergodic can
+  plot its lines or its histogram; Intraday Intensity can plot the normalized oscillator or
+  the cumulative line; Pivot Points offers Traditional, Fibonacci, Camarilla and Woodie
+  ladders on an automatic or explicit anchor; and the Average True Range, Volume Flow
+  Indicator, Relative Volatility Index and Price Volume Trend let you pick their smoothing.
+- **New options on the classics.** Chandelier Exit can ratchet its stops, Balance of Power
+  and On Balance Volume can be smoothed, Bollinger Bands Width marks its squeeze and bulge
+  references, the Ulcer Index can show the raw drawdown behind it, 52 Week High/Low can add
+  the all-time high and low, and VWAP offers percentage bands beside its deviation bands.
+
+### Changed
+
+- **The built-in indicators now match their reference builds.** Defaults, formulas and
+  looks were aligned study by study, so several read differently than before: Stochastic
+  smooths %K over 3 bars instead of 1, Zero-Lag EMA defaults to 21, Connors RSI flags
+  90/10 rather than 80/20, Historical Volatility annualizes over 252 periods on a sample
+  deviation, and SuperTrend, the Klinger Oscillator, the Ulcer Index, the Hull average and
+  Williams Fractal were corrected to their published definitions. Bollinger Bands Width and
+  TRIX are no longer rescaled, so their values are smaller than before.
+  _(Breaking: VWAP's per-band color and fill settings collapse into one bullish, one
+  bearish and one band color, its Day anchor is now called Session, and it hides itself on
+  daily and higher timeframes unless you turn that guard off. The Moving Average type
+  `RMA` is now listed as `RMA (SMMA)`, though charts saved with the old name still load.)_
+
 ## [v0.7.7]
 
 ### Added
@@ -109,7 +171,7 @@ All notable changes to Vela, newest first.
   price axis on a 0–1 placeholder. The axis now keeps following the hidden bars as you
   pan and zoom, so showing the chart again lands exactly where you left it. As before,
   when overlay indicators remain on the pane they take the scale over and fill it.
-  
+
 ### Fixed
 
 - **Dense timeline marks fold into clusters as you zoom out.** Marks of one group used to
@@ -251,9 +313,9 @@ All notable changes to Vela, newest first.
   load. Each accepts `true` (the built-in feel), `false` (instant), or a duration in
   milliseconds; the reveal also takes a style (`'settle'` or `'grow'`) and a sweep
   duration. Every one is also a live renderer feature (`chart.renderer.set('animZoom',
-  150)`), and the settings dialog's *Symbol → Animation* group gains on/off switches
+150)`), and the settings dialog's _Symbol → Animation_ group gains on/off switches
   for zoom, pan momentum, the price scale, and the reveal alongside the existing
-  *Animate price changes* — switching a motion back on restores the duration you
+  _Animate price changes_ — switching a motion back on restores the duration you
   configured, and the switches ride `getConfig()`/`applyConfig()` like every other
   setting. Turning zoom animation off applies to the keyboard zoom keys too.
 
@@ -409,8 +471,8 @@ All notable changes to Vela, newest first.
   show the real latest values. Set `liveBar: true` to bring the slide back, or give it
   a duration in milliseconds to make it as quick or as gentle as your feed calls for
   (a slow feed reads well with a longer glide; a busy one with a short one). The chart
-  settings dialog gets a matching **Animate price changes** switch in a new *Animation*
-  group of the *Symbol* tab (with a hint explaining it), saved with the rest of the chart's settings and templates; switching it back
+  settings dialog gets a matching **Animate price changes** switch in a new _Animation_
+  group of the _Symbol_ tab (with a hint explaining it), saved with the rest of the chart's settings and templates; switching it back
   on reuses the duration you configured. A new bar always opens without a glide, and
   the crosshair, legend and data window show the real values at all times.
   `animations: false` keeps disabling every animation at once.
