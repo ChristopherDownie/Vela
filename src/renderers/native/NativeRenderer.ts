@@ -3429,13 +3429,16 @@ export class NativeRenderer implements IChartRenderer {
      *  pointer at 14:00 must light THIS day's daily candle, not tomorrow's (a time past
      *  a bar's midpoint still belongs to that bar). Before the first open or past the
      *  forming bar there is no containing bar — no ghost. */
-    private externalCrossPx(): { x: number; y: number | null; time: Millis; price: number | null } | null {
+    private externalCrossPx(): { x: number; y: number | null; time: Millis; price: number | null; line: boolean } | null {
         const ext = this.externalCross;
         if (!ext || this.coords.barCount === 0) return null;
         const logical = Math.floor(this.coords.timeToLogical(ext.time));
-        if (logical < 0 || logical >= this.coords.barCount) return null;
-        const x = this.coords.logicalToX(logical);
-        if (!Number.isFinite(x) || x < 0 || x > this.coords.width) return null;
+        if (!(logical < this.coords.barCount)) return null; // past the forming bar: nothing after it
+        // Before the first open, or off the window: no line to draw — but a `crosshairOverride`
+        // veil still covers every bar after it (all of them, when it precedes the view).
+        const x = this.coords.logicalToX(Math.max(logical, -1));
+        if (!Number.isFinite(x)) return null;
+        const line = logical >= 0 && x >= 0 && x <= this.coords.width;
         let y: number | null = null;
         if (ext.price != null) {
             const pricePane = this.scene.orderedPanes().find((p) => p.kind === 'price');
@@ -3445,7 +3448,7 @@ export class NativeRenderer implements IChartRenderer {
             }
         }
         // The raw price rides along for the axis chip (only meaningful with a resolved y).
-        return { x, y, time: this.coords.logicalToTime(logical), price: y != null ? ext.price : null };
+        return { x, y, time: this.coords.logicalToTime(Math.max(logical, 0)), price: y != null ? ext.price : null, line };
     }
 
     /** Sticky magnet mode for user drawings (off/weak/strong); the drawings toolbar drives it. */

@@ -72,7 +72,8 @@ All notable changes to Vela, newest first.
   already use, now available to your own interfaces. The new `crosshairOverride` renderer
   feature restyles the crosshair while the user picks something on the chart — a solid
   line in your color, the horizontal level hidden, and optionally the area after it veiled
-  (`shadeRight`) — without touching the saved chart settings.
+  (`shadeRight`) — without touching the saved chart settings. A synced crosshair from
+  another chart takes the same look, so a pick can span several charts.
 - **Plugins can dock a strip under the charts.** `ctx.dockStrip(el)` on the widget context
   places your element as a full-width strip between the charts and the bottom bar; the
   charts shrink to make room, and the returned function takes it away again.

@@ -249,7 +249,11 @@ ws.replay.on('replay:step', ({ cursorTime, remaining }) => updateUi(cursorTime, 
   active cell's chart, and the `replay:step` / `replay:tick` events report it.
 
 A contribution drives it as `ctx.replay`. Driving one cell's `chart.replay` directly still
-replays that chart alone.
+replays that chart alone. The cut rule is exported for interfaces that preview it:
+`barClose(open, timeframe)` is when a bar closes (calendar months for month-based
+timeframes), and `lastOpenClosedBy(time, timeframe)` is the last bar open a chart keeps at a
+given replay time — for example, the spot for a ghost crosshair
+(`renderer.setExternalCrosshair`) marking where each chart would be cut.
 
 ## State & persistence
 

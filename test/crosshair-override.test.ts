@@ -81,13 +81,13 @@ describe('CrosshairRenderer under an override', () => {
         return { ctx, segments, texts, strokes, fills };
     }
 
-    function paint(override: unknown) {
+    function paint(override: unknown, opts: { external?: { x: number; y: number | null; time: number; price?: number | null } } = {}) {
         const rec = recorder();
         const canvas = { width: 400, height: 300, getContext: () => rec.ctx } as unknown as HTMLCanvasElement;
         const cr = new CrosshairRenderer();
         cr.mount(canvas);
         const scene = new SceneGraph();
-        scene.crosshair = { x: 100, y: 120 };
+        scene.crosshair = opts.external ? null : { x: 100, y: 120 };
         scene.crosshairOverride = sanitizeCrosshairOverride(override);
         scene.panes.set('price', { id: 'price', kind: 'price', bounds: { top: 0, height: 280 }, scale: { min: 0, max: 100 }, axisFormat: 'price' } as never);
         const coords = {
@@ -100,7 +100,7 @@ describe('CrosshairRenderer under an override', () => {
             logicalToTime: (l: number) => 1_700_000_000_000 + l * 3_600_000,
             yToPrice: () => 50,
         } as unknown as CoordinateSystem;
-        cr.render(scene, coords, DARK_THEME);
+        cr.render(scene, coords, DARK_THEME, null, opts.external ?? null);
         return rec;
     }
 
@@ -129,5 +129,33 @@ describe('CrosshairRenderer under an override', () => {
         expect(rec.fills[0]).toEqual({ style: '#101010', alpha: 0.6, rect: [105, 0, 275, 280] });
         expect(rec.strokes[0]!.alpha).not.toBe(0.6); // the line keeps its own opacity
         expect(paint({ horizontal: false }).fills.some((f) => f.style === '#101010')).toBe(false);
+    });
+
+    it('a synced ghost crosshair wears the override too: its style, no level line, and the veil from its bar', () => {
+        const ghost = { x: 200, y: 90, time: 1_700_000_000_000, price: 42 };
+        const rec = paint({ horizontal: false, color: '#2962ff', style: 'solid', opacity: 1, shadeRight: { color: '#101010', opacity: 0.6 } }, { external: ghost });
+        // ghost x=200 → bar 20; its right edge is logical 20.5 → x=205
+        expect(rec.fills[0]).toEqual({ style: '#101010', alpha: 0.6, rect: [205, 0, 175, 280] });
+        expect(rec.segments.some(isHorizontal)).toBe(false);
+        expect(rec.strokes[0]).toEqual({ style: '#2962ff', dash: [], alpha: 0.55 }); // dimmed: still a ghost
+        expect(rec.texts.length).toBe(1); // the time chip only
+    });
+
+    it('a ghost left of the window still veils every bar in view, with no line; without an override nothing shows', () => {
+        const offLeft = { x: -50, y: null, time: 1_700_000_000_000, line: false };
+        const rec = paint({ horizontal: false, shadeRight: { color: '#101010', opacity: 0.6 } }, { external: offLeft });
+        expect(rec.fills[0]).toEqual({ style: '#101010', alpha: 0.6, rect: [0, 0, 380, 280] });
+        expect(rec.strokes).toEqual([]);
+        expect(rec.texts).toEqual([]);
+        const plain = paint(null, { external: offLeft });
+        expect(plain.fills.some((f) => f.style === '#101010')).toBe(false);
+        expect(plain.strokes).toEqual([]);
+    });
+
+    it('without an override the ghost is unchanged: configured style, level line, no veil', () => {
+        const rec = paint(null, { external: { x: 200, y: 90, time: 1_700_000_000_000, price: 42 } });
+        expect(rec.fills.some((f) => f.style === '#101010')).toBe(false);
+        expect(rec.segments.some(isHorizontal)).toBe(true);
+        expect(rec.strokes[0]!.dash).toEqual([6, 4]);
     });
 });
