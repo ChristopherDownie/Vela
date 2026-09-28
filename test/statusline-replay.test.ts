@@ -20,16 +20,23 @@ describe('Statusline badge', () => {
         const { line, badge } = make();
         expect(badge.dataset.status).toBe('open');
 
+        const bubble = badge.querySelector<HTMLElement>('.vela-callout')!;
+        const replay = badge.querySelector<HTMLElement>('.vela-sl-replay-badge')!;
+        expect([bubble.hidden, replay.hidden]).toEqual([false, true]);
+
         line.setReplaying(true);
         expect(badge.dataset.status).toBe('replay');
-        expect(badge.style.background).toBe('var(--vela-selected-bg)'); // the inverse chip: white on dark, dark on light
-        expect(badge.style.color).toBe('var(--vela-selected-fg)');
+        expect([bubble.hidden, replay.hidden]).toEqual([true, false]);
+        // circle and glyph in one drawing, in the inverse chip's colors (white on dark, dark on light)
+        expect(replay.querySelector('circle')!.getAttribute('style')).toContain('var(--vela-selected-bg)');
+        expect(replay.querySelector('path')!.getAttribute('style')).toContain('var(--vela-selected-fg)');
 
         line.setMarketStatus('closed'); // a session change while replaying waits for the end
         expect(badge.dataset.status).toBe('replay');
 
         line.setReplaying(false);
         expect(badge.dataset.status).toBe('closed');
+        expect([bubble.hidden, replay.hidden]).toEqual([false, true]);
         line.destroy();
     });
 

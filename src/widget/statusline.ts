@@ -102,7 +102,9 @@ const CSS = `
 /* Market status badge — a kit callout bubble (icon-only 16px circle, label on hover
  * via the kit tooltip); the session tint is applied per status in setMarketStatus. While
  * the chart replays past bars it wears the replay badge instead (the inverse chip). */
-.vela-statusline .vela-sl-market { align-self: center; }
+.vela-statusline .vela-sl-market { align-self: center; display: inline-flex; }
+.vela-statusline .vela-sl-market > [hidden] { display: none !important; }
+.vela-statusline .vela-sl-replay-badge, .vela-statusline .vela-sl-replay-badge svg { display: block; width: 16px; height: 16px; }
 .vela-statusline .vela-sl-ohlc { display: flex; gap: var(--vela-space-1); color: var(--vela-fg-muted); }
 .vela-statusline .vela-sl-ohlc b { color: var(--vela-fg); font-weight: 500; }
 /* The change value wears the SAME ink as the OHLC values (set inline per render) —
@@ -181,6 +183,17 @@ const MARKET_LABELS: Record<MarketStatus, string> = {
     holiday: 'Market Holiday',
 };
 const REPLAY_LABEL = 'Replay Mode';
+/**
+ * The replay badge: the circle and its glyph (two left-pointing triangles) in ONE drawing —
+ * a circle behind an icon element rounds to device pixels separately from it, so the glyph
+ * would sit a different fraction off-centre in every chart of a grid. The glyph sits 0.4px
+ * left of the geometric centre: triangles weigh at their flat edges.
+ */
+const REPLAY_BADGE_SVG =
+    '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">' +
+    '<circle cx="8" cy="8" r="8" style="fill: var(--vela-selected-bg)"/>' +
+    '<path d="M12.1 4.75v6.5L7.6 8zM7.6 4.75v6.5L3.1 8z" style="fill: var(--vela-selected-fg); stroke: var(--vela-selected-fg); stroke-width: 0.8; stroke-linejoin: round"/>' +
+    '</svg>';
 
 /** Session ink: open wears the theme's up color; the other sessions are meaning
  *  constants from the palette (amber pre, sky post and extended, gray closed/holiday).
@@ -258,9 +271,12 @@ export class Statusline {
     private readonly ohlcEl: HTMLElement;
     private readonly changeEl: HTMLElement;
     private readonly symbolEl: HTMLElement;
+    /** The badge slot — the market bubble, or the replay badge while replaying. */
     private readonly marketEl: HTMLElement;
-    /** The badge itself — a kit callout bubble (the same element as {@link marketEl}). */
+    /** The market status face — a kit callout bubble. */
     private readonly marketBubble: CalloutBubble;
+    /** The replay face — see {@link REPLAY_BADGE_SVG}. */
+    private readonly replayBadge: HTMLElement;
     private marketTip!: Tooltip;
     /** The show-chart eye — visible only while the chart is hidden. */
     private readonly eyeEl: HTMLButtonElement;
@@ -330,8 +346,14 @@ export class Statusline {
             label: MARKET_LABELS.open,
             host,
         });
-        this.marketEl = this.marketBubble.el;
-        this.marketEl.classList.add('vela-sl-market');
+        this.replayBadge = doc.createElement('span');
+        this.replayBadge.className = 'vela-sl-replay-badge';
+        this.replayBadge.innerHTML = REPLAY_BADGE_SVG;
+        this.replayBadge.hidden = true;
+        // One slot, two faces: the market bubble, or the replay badge while replaying.
+        this.marketEl = doc.createElement('span');
+        this.marketEl.className = 'vela-sl-market';
+        this.marketEl.append(this.marketBubble.el, this.replayBadge);
         this.ohlcEl = doc.createElement('span');
         this.ohlcEl.className = 'vela-sl-ohlc';
         this.changeEl = doc.createElement('span');
@@ -483,9 +505,10 @@ export class Statusline {
     }
 
     private dressBadge(): void {
+        this.marketBubble.el.hidden = this.replaying;
+        this.replayBadge.hidden = !this.replaying;
         if (this.replaying) {
             this.marketEl.dataset.status = 'replay';
-            this.marketBubble.set({ icon: 'replay', background: 'var(--vela-selected-bg)', color: 'var(--vela-selected-fg)', label: REPLAY_LABEL });
             this.marketTip.setContent(REPLAY_LABEL);
             return;
         }
