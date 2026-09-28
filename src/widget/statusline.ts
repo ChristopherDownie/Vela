@@ -186,13 +186,13 @@ const REPLAY_LABEL = 'Replay Mode';
 /**
  * The replay badge: the circle and its glyph (two left-pointing triangles) in ONE drawing —
  * a circle behind an icon element rounds to device pixels separately from it, so the glyph
- * would sit a different fraction off-centre in every chart of a grid. The glyph sits 0.4px
+ * would sit a different fraction off-centre in every chart of a grid. The glyph sits 0.8px
  * left of the geometric centre: triangles weigh at their flat edges.
  */
 const REPLAY_BADGE_SVG =
     '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">' +
     '<circle cx="8" cy="8" r="8" style="fill: var(--vela-selected-bg)"/>' +
-    '<path d="M12.1 4.75v6.5L7.6 8zM7.6 4.75v6.5L3.1 8z" style="fill: var(--vela-selected-fg); stroke: var(--vela-selected-fg); stroke-width: 0.8; stroke-linejoin: round"/>' +
+    '<path d="M11.7 4.75v6.5L7.2 8zM7.2 4.75v6.5L2.7 8z" style="fill: var(--vela-selected-fg); stroke: var(--vela-selected-fg); stroke-width: 0.8; stroke-linejoin: round"/>' +
     '</svg>';
 
 /** Session ink: open wears the theme's up color; the other sessions are meaning
