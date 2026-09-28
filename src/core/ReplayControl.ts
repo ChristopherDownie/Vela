@@ -79,7 +79,8 @@ export interface ReplayBounds {
  * `chart.marks`. Rewinds the chart to a past bar and reveals the following bars one at a
  * time, by hand or on a timer, from the history already in memory (nothing is refetched).
  * Revealed bars travel the exact path of a live bar: indicators, chart-type engines and
- * the `bar` event see them as new bars. Live updates pause for the duration; `stop()` (or
+ * the `bar` event see them as new bars — but script alerts stay quiet (a replayed bar is
+ * history, not a live signal). Live updates pause for the duration; `stop()` (or
  * revealing the last bar) restores the full history and resumes them. A timeframe or
  * session switch carries the replay over to the new bars at the same point in time; a
  * symbol switch ends it.

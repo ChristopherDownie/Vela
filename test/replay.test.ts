@@ -625,6 +625,56 @@ describe('chart.replay', () => {
         await flush();
         expect(hosts.map((h) => h.live)).toEqual([true, false, true]);
     });
+
+    it('script alerts stay quiet while replaying, and come back once it ends', async () => {
+        /** Raises an alert on every bar notification, like a script alerting on each close. */
+        class AlertingEngine extends RecordingEngine {
+            override execute(req: ExecutionRequest, handlers: ExecutionHandlers): ExecutionSession {
+                const session = super.execute(req, handlers);
+                const bars = (): OHLCV[] => req.getBars?.() ?? req.bars;
+                return {
+                    ...session,
+                    notifyBars: () => {
+                        const last = bars()[bars().length - 1]!;
+                        handlers.onAlert?.({ id: 'a', message: `close ${last.close}`, time: last.time, barIndex: bars().length - 1 });
+                    },
+                };
+            }
+        }
+        const { chart, feed, renderer } = make({ engine: new AlertingEngine() });
+        await chart.ready();
+        const handle = chart.addIndicator('alerter');
+        await flush();
+        const chartAlerts: string[] = [];
+        const handleAlerts: string[] = [];
+        chart.on('alert', (a) => chartAlerts.push(a.message));
+        handle.on('alert', (a) => handleAlerts.push(a.message));
+        const newest = renderer.bars[renderer.bars.length - 1]!;
+
+        feed.onBar!({ ...newest, time: newest.time + HOUR, close: 500 }); // a live bar alerts
+        await flush();
+        expect(chartAlerts).toEqual(['close 500']);
+
+        await chart.replay.start({ from: renderer.bars[60]!.time });
+        await flush();
+        chart.replay.step();
+        chart.replay.step();
+        chart.replay.play(5);
+        await sleep(60);
+        chart.replay.pause();
+        await flush();
+        expect(chart.replay.state.remaining).toBeLessThan(39); // bars were revealed…
+        expect(chartAlerts).toEqual(['close 500']); // …without a single alert
+        expect(handleAlerts).toEqual(['close 500']);
+
+        chart.replay.stop();
+        await flush();
+        const last = renderer.bars[renderer.bars.length - 1]!;
+        feed.onBar!({ ...last, time: last.time + HOUR, close: 600 });
+        await flush();
+        expect(chartAlerts[chartAlerts.length - 1]).toBe('close 600'); // live again
+        expect(chartAlerts.every((m) => m === 'close 500' || m === 'close 600')).toBe(true); // never a replayed bar
+    });
 });
 
 describe('chart.replay tick replay (setTicks)', () => {

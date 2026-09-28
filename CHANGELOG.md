@@ -41,6 +41,7 @@ All notable changes to Vela, newest first.
 - **Bar replay.** `chart.replay` rewinds the chart to any past bar and plays the following
   bars back one at a time — by hand with `step()`, or on a timer with `play(intervalMs)` at
   the pace you choose. Indicators update as each bar appears, exactly as they would live,
+  while their alerts stay quiet — a replayed bar is history, not a signal to act on —
   and live updates wait until you `stop()` or the replay reaches the present; the chart then
   shows the full history again and catches up on what it missed. Starting further back than
   the loaded history loads the older bars first (the chart returns to its usual depth

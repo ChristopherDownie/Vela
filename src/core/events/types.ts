@@ -149,7 +149,8 @@ export interface VelaEventMap extends Record<string, unknown> {
    */
   "replay:end": { reason: ReplayEndReason };
   /** An indicator's script raised an alert. `indicator` names the source — the
-   *  indicator's display title (what its legend row shows). */
+   *  indicator's display title (what its legend row shows). Never fires for bars a
+   *  replay reveals (`chart.replay`). */
   alert: EngineAlert & { indicator?: string };
   warning: EngineWarning;
 }

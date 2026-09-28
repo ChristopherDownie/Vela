@@ -258,7 +258,7 @@ Subscribe with `chart.on(event, handler)`; every subscription returns an unsubsc
 | `viewport:changed` | `{ from, to }` (epoch-ms) | The visible time range moved (pan/zoom/fit) — fires per applied change, not debounced. The seam viewport-sync links between charts build on. |
 | `theme:changed` | the resolved theme object | The app theme changed — `setTheme(...)` or the in-chart settings dialog (Canvas → Theme). Host chrome around the chart (toolbars, panels, page shells) re-skins from the payload. Plot-only cosmetic edits (a `layout.background` set through the config) do **not** fire it. |
 | `mark:click` | `{ id, ids, time, group? }` | A [timeline mark](#chartmarks--the-timeline-marks-control-surface) glyph was clicked — `ids` lists every mark under it (several marks of one group on one bar fold into a cluster), `id`/`time` its first. Fires before the popup opens; a mark without content opens none, so this is where a host shows its own UI. |
-| `alert` | engine alert | A script raised an alert. |
+| `alert` | engine alert | A script raised an alert. Never fires for bars a [replay](#chartreplay--the-bar-replay-control-surface) reveals. |
 | `warning` | engine warning | A script raised a warning. |
 
 ---
@@ -481,6 +481,8 @@ full history, resumes them, and fetches the bars that closed in the meantime. Sw
 timeframe (or session) keeps the replay going on the new bars, at the same point in time: the
 chart keeps the bars that had closed by the end of what was revealed (a coarser bar still open at
 that point stays hidden), and playback carries on if it was on. Switching the symbol ends the replay.
+Script alerts stay quiet while a replay runs: a replayed bar is history, so it never raises the
+`alert` event (on the chart or on an indicator handle).
 
 | Member | Description |
 |---|---|

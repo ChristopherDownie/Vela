@@ -2211,6 +2211,10 @@ export class EngineOrchestrator implements IndicatorController, PaneController, 
                     this.emitScriptRun(id, cause, first);
                 },
                 onAlert: (a) => {
+                    // A replayed bar runs the live path, so a script alerts on it as on a live
+                    // bar — but it is history: announcing it would pass the past off as a
+                    // live signal (toasts, bell, host notifications).
+                    if (this.replayQueue || this.replayCarrying) return;
                     // The chart-level event names its source — the indicator's effective
                     // display title (host override, else the script's own; the same rule
                     // the legend announce uses) — hosts render alerts from many
