@@ -5,6 +5,7 @@
 import type { Vela } from '../Vela';
 import type { WidgetContext } from '../widget/contributions';
 import type { ChartCell } from './ChartCell';
+import type { WorkspaceReplay } from './WorkspaceReplay';
 
 /** The extended context a workspace hands to contributed actions/attachments. */
 export interface WorkspaceWidgetContext extends WidgetContext {
@@ -14,6 +15,9 @@ export interface WorkspaceWidgetContext extends WidgetContext {
     /** LIVE getter — follows every active-cell switch. */
     activeCellId: string;
     setActiveCell(id: string): void;
+    /** Bar replay across every cell on one clock (`workspace.replay`) — drive this rather
+     *  than one cell's `chart.replay`, so every chart replays together. */
+    replay: WorkspaceReplay;
 }
 
 /** What the context builder reads from the workspace (an interface, not the class —
@@ -30,6 +34,7 @@ export interface ContextHost {
     toast(message: string, kind?: 'info' | 'success' | 'error'): void;
     /** Debounced dirty mark — third-party persistable state changed (`ctx.stateChanged()`). */
     stateDirty(): void;
+    replay: WorkspaceReplay;
 }
 
 /** Build a fresh context bound to the CURRENT active cell. EVERY read resolves live —
@@ -74,5 +79,6 @@ export function buildContext(host: ContextHost): WorkspaceWidgetContext {
             return host.active()?.id ?? '';
         },
         setActiveCell: (id) => host.setActiveCell(id),
+        replay: host.replay,
     };
 }

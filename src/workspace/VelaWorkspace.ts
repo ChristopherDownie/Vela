@@ -58,6 +58,7 @@ import { encodeState, decodeState, sanitizeState, type WorkspaceState, type Work
 import { localStorageAdapter } from '../widget/persist';
 import { ChartCell, seedDefaults, cellChartDefaults, type CellSeed, type CellBoot, type PooledCellState } from './ChartCell';
 import { buildContext, type WorkspaceWidgetContext } from './context';
+import { WorkspaceReplay } from './WorkspaceReplay';
 import {
     registerBuiltinLayouts,
     layouts,
@@ -255,6 +256,8 @@ export class VelaWorkspace {
     readonly root: HTMLElement;
     /** The shortcut system — one manager for the whole workspace, routed to the active cell. */
     readonly keymap: KeymapManager;
+    /** Bar replay across every cell on one clock (see {@link WorkspaceReplay}). */
+    readonly replay: WorkspaceReplay;
 
     private readonly gridEl: HTMLElement;
     private readonly stripsEl: HTMLElement;
@@ -398,6 +401,21 @@ export class VelaWorkspace {
         const hostEl = typeof container === 'string' ? document.querySelector<HTMLElement>(container) : container;
         if (!hostEl) throw new Error(`VelaWorkspace: container not found: ${String(container)}`);
         this.opts = opts;
+        // Before any cell exists: the replay watches every cell from its creation on.
+        this.replay = new WorkspaceReplay({
+            cells: () => this.cells(),
+            activeId: () => this.activeId,
+            onCells: (handler) => {
+                const offs = [
+                    this.events.on('cell:created', ({ id }) => handler({ kind: 'created', id })),
+                    this.events.on('cell:destroyed', ({ id }) => handler({ kind: 'destroyed', id })),
+                    this.events.on('cell:active', ({ id }) => handler({ kind: 'active', id })),
+                ];
+                return () => {
+                    for (const off of offs) off();
+                };
+            },
+        });
         // ── persistence boot: a SYNC storage restores before the first build (no flash
         // of defaults); an async adapter resolves later and late-applies via applyState.
         this.persistKey = opts.persist === undefined || opts.persist === false ? null : opts.persist === true ? 'vela-workspace' : opts.persist;
@@ -891,6 +909,7 @@ export class VelaWorkspace {
             root: this.root,
             toast: (message, kind) => this.toastHost.show(message, kind),
             stateDirty: () => this.markStateDirty(),
+            replay: this.replay,
         });
     }
 
@@ -1265,6 +1284,7 @@ export class VelaWorkspace {
         if (this.destroyed) return;
         this.flushPendingState(); // the user's last edit, before anything is torn down
         this.destroyed = true;
+        this.replay.destroy();
         if (this.persistKey !== null && typeof window !== 'undefined') window.removeEventListener('beforeunload', this.onUnload);
         this.resizeObserver?.disconnect();
         this.splitters.destroy();

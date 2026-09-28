@@ -180,7 +180,7 @@ describe('chart.replay', () => {
         expect(renderer.bars[renderer.bars.length - 1]!.time).toBe(from);
         expect(feed.unsubs).toBe(1); // live paused
         expect(starts).toEqual([{ cursorTime: from, remaining: 60 }]);
-        expect(chart.replay.state).toEqual({ active: true, playing: false, cursorTime: from, remaining: 60, intervalMs: 1000 });
+        expect(chart.replay.state).toEqual({ active: true, playing: false, cursorTime: from, remaining: 60, nextTime: from + HOUR, intervalMs: 1000 });
     });
 
     it('step() reveals the next bar through the live-bar path (renderer, bar event, sessions)', async () => {

@@ -12,6 +12,10 @@ export interface ReplayState {
     cursorTime: number | null;
     /** Bars still hidden to the right of the cursor. */
     remaining: number;
+    /** Open time (epoch ms) of the next bar a step completes — the one forming tick by tick,
+     *  else the next hidden one; null when nothing is left or replay is off. Lets a host
+     *  keep several charts on one clock (see `VelaWorkspace.replay`). */
+    nextTime: number | null;
     /** Delay between two updates while playing (ms) — two bars, or two ticks with {@link ReplayControl.setTicks}. */
     intervalMs: number;
 }

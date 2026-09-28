@@ -54,6 +54,12 @@ All notable changes to Vela, newest first.
   events let an interface follow along. In the widget and the workspace, a replaying chart
   shows a "Replay" line under its symbol watermark; the new Replay watermark switch in
   chart settings (next to Symbol watermark) turns it off.
+- **Bar replay across a multi-chart layout.** `workspace.replay` rewinds every chart of a
+  workspace at once and plays them back on one clock: each chart shows exactly the bars that
+  had closed by the shared replay time, so charts on different timeframes or markets never
+  reveal the future to one another, and the finest timeframe sets the pace. Charts added to
+  the layout join the replay, a chart switching symbol rejoins it, and it ends on every
+  chart together. Contributions drive it as `ctx.replay`.
 - **Tick replay.** `chart.replay.setTicks(source)` plays each revealed bar the way a live
   one forms: your source hands over the bar's intrabar updates, and the candle opens, moves
   and stretches through them before settling exactly on the stored bar, with indicators

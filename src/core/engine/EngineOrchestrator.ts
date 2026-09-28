@@ -1188,6 +1188,7 @@ export class EngineOrchestrator implements IndicatorController, PaneController, 
             playing: this.replayCarrying?.playing ?? this.replayPlaying,
             cursorTime: active ? (this.rawBars[this.rawBars.length - 1]?.time ?? null) : null,
             remaining: this.replayQueue?.length ?? 0,
+            nextTime: this.replayForming?.bar.time ?? this.replayQueue?.[0]?.time ?? null,
             intervalMs: this.replayIntervalMs,
         };
     }

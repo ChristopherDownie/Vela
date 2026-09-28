@@ -236,6 +236,8 @@ registerWidgetAction({
         // ctx.togglePanel(id, open?) — open/close a docked side panel (dock stays exclusive)
         // ctx.dockStrip(el) — dock an element as a full-width strip between the charts and
         //   the bottom bar (the charts shrink); returns the undock
+        // ctx.replay (workspace) — bar replay across every cell on one clock; drive it
+        //   rather than one cell's chart.replay so every chart replays together
         // ctx.addIndicator({ name, script, id?, language? }) — add a script indicator
         //   THROUGH the shell: recorded in the unified undo/redo timeline and the
         //   indicator count. `id` is the indicator's id on the chart (omit: minted);

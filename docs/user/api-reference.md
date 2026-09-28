@@ -482,7 +482,9 @@ timeframe (or session) keeps the replay going on the new bars, at the same point
 chart keeps the bars that had closed by the end of what was revealed (a coarser bar still open at
 that point stays hidden), and playback carries on if it was on. Switching the symbol ends the replay.
 Script alerts stay quiet while a replay runs: a replayed bar is history, so it never raises the
-`alert` event (on the chart or on an indicator handle).
+`alert` event (on the chart or on an indicator handle). In a multi-chart workspace,
+[`workspace.replay`](./workspace.md#bar-replay-across-the-grid) replays every chart together on
+one clock.
 
 | Member | Description |
 |---|---|
@@ -492,7 +494,7 @@ Script alerts stay quiet while a replay runs: a replayed bar is history, so it n
 | `play(intervalMs?)` | Reveal one bar every `intervalMs` — one update, with [tick replay](#tick-replay) (default: the last pace, initially 1000). Calling it again while playing changes the pace. |
 | `pause()` | Stop the timer; the replay stays where it is. |
 | `stop()` | Leave replay: full history back, live updates resumed. Called while a `start()` is still loading older history, it cancels that load instead (the chart returns to its previous depth, the pending `start()` resolves without replaying). |
-| `state` | `{ active, playing, cursorTime, remaining, intervalMs }` — `cursorTime` is the newest bar on screen (`null` when off, and while a timeframe switch reloads the bars — `active` stays `true` through it). |
+| `state` | `{ active, playing, cursorTime, remaining, nextTime, intervalMs }` — `cursorTime` is the newest bar on screen (`null` when off, and while a timeframe switch reloads the bars — `active` stays `true` through it); `nextTime` is the open time of the next bar a step completes (`null` when nothing is left). |
 | `bounds` | `{ first, last }` — the open times of the oldest and newest bar a replay can start from (hidden bars included while replaying), or `null` before any bar loaded. A random start, or a "start from the first bar" button, reads it. |
 | `setTicks(source \| null)` | Play each revealed bar as intrabar updates instead of whole (see below); `null` goes back to whole bars. |
 
