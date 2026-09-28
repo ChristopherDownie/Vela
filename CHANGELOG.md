@@ -78,6 +78,11 @@ All notable changes to Vela, newest first.
 - **Plugins can dock a strip under the charts.** `ctx.dockStrip(el)` on the widget context
   places your element as a full-width strip between the charts and the bottom bar; the
   charts shrink to make room, and the returned function takes it away again.
+- **Plugins choose where an action sits on mobile, and hear taps.** A topbar action's new
+  `mobile` option puts it on the bottom bar or in the three-dots menu (a primary action
+  lands right after Layout there). `chart.renderer.onClick` reports a click or a touch tap
+  on the plot with the bar under it — on touch, where a tap moves no crosshair, the way
+  to learn which bar was chosen.
 
 ### Changed
 

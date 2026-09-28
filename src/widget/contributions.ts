@@ -106,9 +106,19 @@ export interface WidgetActionDescriptor {
      *  right after the style/layout dropdowns, styled like them (the spot and look of
      *  the built-in Indicators button, for actions that replace it). */
     align?: 'left' | 'right';
+    /** Topbar only: where the action goes on the MOBILE layout (the topbar is hidden
+     *  there). `'bar'` is an icon stop on the bottom bar; `'menu'` is a row in the
+     *  three-dots menu — a left (primary) action right after Layout, a right one at the
+     *  end. Default: `'bar'` for `align: 'left'`, `'menu'` otherwise. */
+    mobile?: 'bar' | 'menu';
     /** Runtime gate — omitted ⇒ always shown. */
     when?: (ctx: WidgetContext) => boolean;
     run: (ctx: WidgetContext) => void;
+}
+
+/** Where a topbar action lands on the mobile layout (see {@link WidgetActionDescriptor.mobile}). */
+export function mobilePlacement(action: Pick<WidgetActionDescriptor, 'align' | 'mobile'>): 'bar' | 'menu' {
+    return action.mobile ?? (action.align === 'left' ? 'bar' : 'menu');
 }
 
 /**

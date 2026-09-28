@@ -33,7 +33,7 @@ import { ShortcutsHelp } from '../widget/shortcuts-help';
 import { Toast } from '../widget/toast';
 import { Glider, ZOOM_IN, ZOOM_OUT, PAN_FAST } from '../widget/glide';
 import { toolShortcutHints } from '../widget/tool-shortcuts';
-import { legendActionsProviderFor, legendCalloutsProviderFor, statePersistenceHandlers, topbarActionOverride, widgetActions, widgetAttachments, type WidgetActionDescriptor } from '../widget/contributions';
+import { legendActionsProviderFor, legendCalloutsProviderFor, mobilePlacement, statePersistenceHandlers, topbarActionOverride, widgetActions, widgetAttachments, type WidgetActionDescriptor } from '../widget/contributions';
 import { resolveTopbarComposition, topbarHas, TOPBAR_BUILTIN_IDS, type ResolvedTopbarComposition } from '../widget/topbar-composition';
 import { LayoutModeController, type LayoutMode } from '../widget/layout-mode';
 import { MobileBar } from '../widget/mobile-bar';
@@ -2175,16 +2175,13 @@ export class VelaWorkspace {
             panels: () => (has('panels') ? [...this.dock.list()] : []),
             onTogglePanel: (id) => this.dock.toggle(id),
             ...(has('alerts') ? { alerts: () => this.alerts.map((a) => ({ title: `${a.source} · ${a.title}`, message: a.message, time: a.time })) } : {}),
-            // Left-aligned actions have their own bottom-bar stop — only the rest
-            // lands in the drawer, or every left action would appear twice. Built-in-id
-            // actions are slot OVERRIDES: they reach the drawer through the slot's own
-            // routed button (screenshot) or stop (indicators), never as an extra row.
-            actions: () => {
-                const builtin = new Set<string>(TOPBAR_BUILTIN_IDS);
-                return widgetActions('topbar', this.context())
-                    .filter((a) => a.align !== 'left' && !builtin.has(a.id))
-                    .map((a) => ({ label: a.label, icon: a.icon, run: () => a.run(this.context()) }));
-            },
+            // Actions placed on the bottom bar (left-aligned by default) have their stop
+            // there — only the menu-placed ones land in the drawer, or they would appear
+            // twice: left (primary) ones with the primary rows, right ones at the end.
+            // Built-in-id actions are slot OVERRIDES: they reach the drawer through the
+            // slot's own routed button (screenshot) or stop (indicators), never as a row.
+            primaryActions: () => this.drawerActions('left'),
+            actions: () => this.drawerActions('right'),
             // The desktop layout dropdown's whole surface — the grid canvas, the
             // non-canvas presets and the sync switches — relocated into the kebab
             // drawer (the topbar is hidden on mobile). Same reads as the topbar block;
@@ -2211,6 +2208,14 @@ export class VelaWorkspace {
             onOpenChange: (open) => this.trackDialog(open),
         });
         this.moreDrawer.open();
+    }
+
+    /** The contributed topbar actions the mobile menu lists, from one cluster. */
+    private drawerActions(cluster: 'left' | 'right'): Array<{ label: string; icon?: string; run: () => void }> {
+        const builtin = new Set<string>(TOPBAR_BUILTIN_IDS);
+        return widgetActions('topbar', this.context())
+            .filter((a) => mobilePlacement(a) === 'menu' && (a.align === 'left') === (cluster === 'left') && !builtin.has(a.id))
+            .map((a) => ({ label: a.label, icon: a.icon, run: () => a.run(this.context()) }));
     }
 
     private openTimezoneDrawer(): void {

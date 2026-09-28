@@ -229,6 +229,9 @@ registerWidgetAction({
     align: 'left',               // topbar only: 'left' joins the primary chrome cluster
                                  //  (after the style/layout dropdowns, styled like them);
                                  //  'right' (default) the right-hand tools cluster
+    mobile: 'menu',              // topbar only: on the mobile layout, 'bar' (a bottom-bar
+                                 //  stop) or 'menu' (a three-dots row); default: 'bar'
+                                 //  for align: 'left', 'menu' otherwise
     when: (ctx) => ctx.priceStyle === 'mytype',   // optional runtime gate
     run: (ctx) => {
         // ctx.chart (the CURRENT inner chart) · ctx.symbol / timeframe / priceStyle
@@ -256,7 +259,9 @@ dropdowns, wearing the same height/typography as the built-in buttons there (tha
 the built-in Indicators button's exact spot and look, for actions that replace it).
 On the mobile chrome the split carries over: left-aligned actions get their own
 icon-only stop in the bottom bar (the built-in indicators slot), while right-aligned
-ones stay in the three-dots sheet. `context:*` actions are appended to the matching
+ones stay in the three-dots sheet. `mobile` overrides it per action: a left action with
+`mobile: 'menu'` becomes a three-dots row with the primary rows (right after Layout),
+and a right action with `mobile: 'bar'` gets a bottom-bar stop. `context:*` actions are appended to the matching
 right-click menu zone. Register at import time — a widget constructed later picks them
 up; after late registrations call `widget.refreshActions()`.
 
