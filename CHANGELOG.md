@@ -2,7 +2,7 @@
 
 All notable changes to Vela, newest first.
 
-## [Unreleased]
+## [0.7.8]
 
 ### Fixed
 
@@ -171,7 +171,7 @@ All notable changes to Vela, newest first.
   price axis on a 0–1 placeholder. The axis now keeps following the hidden bars as you
   pan and zoom, so showing the chart again lands exactly where you left it. As before,
   when overlay indicators remain on the pane they take the scale over and fill it.
-  
+
 ### Fixed
 
 - **Dense timeline marks fold into clusters as you zoom out.** Marks of one group used to
@@ -313,9 +313,9 @@ All notable changes to Vela, newest first.
   load. Each accepts `true` (the built-in feel), `false` (instant), or a duration in
   milliseconds; the reveal also takes a style (`'settle'` or `'grow'`) and a sweep
   duration. Every one is also a live renderer feature (`chart.renderer.set('animZoom',
-  150)`), and the settings dialog's *Symbol → Animation* group gains on/off switches
+150)`), and the settings dialog's _Symbol → Animation_ group gains on/off switches
   for zoom, pan momentum, the price scale, and the reveal alongside the existing
-  *Animate price changes* — switching a motion back on restores the duration you
+  _Animate price changes_ — switching a motion back on restores the duration you
   configured, and the switches ride `getConfig()`/`applyConfig()` like every other
   setting. Turning zoom animation off applies to the keyboard zoom keys too.
 
@@ -471,8 +471,8 @@ All notable changes to Vela, newest first.
   show the real latest values. Set `liveBar: true` to bring the slide back, or give it
   a duration in milliseconds to make it as quick or as gentle as your feed calls for
   (a slow feed reads well with a longer glide; a busy one with a short one). The chart
-  settings dialog gets a matching **Animate price changes** switch in a new *Animation*
-  group of the *Symbol* tab (with a hint explaining it), saved with the rest of the chart's settings and templates; switching it back
+  settings dialog gets a matching **Animate price changes** switch in a new _Animation_
+  group of the _Symbol_ tab (with a hint explaining it), saved with the rest of the chart's settings and templates; switching it back
   on reuses the duration you configured. A new bar always opens without a glide, and
   the crosshair, legend and data window show the real values at all times.
   `animations: false` keeps disabling every animation at once.
