@@ -133,8 +133,9 @@ registerIcon('chevron-down', S('<path d="M3.5 6 8 10.5 12.5 6"/>'));
 registerIcon('chevron-up', S('<path d="M3.5 10 8 5.5 12.5 10"/>'));
 registerIcon('chevrons-right', S('<path d="m4 3.5 4.5 4.5L4 12.5"/><path d="m8.5 3.5 4.5 4.5-4.5 4.5"/>'));
 registerIcon('chevrons-left', S('<path d="M12 3.5 7.5 8l4.5 4.5"/><path d="M7.5 3.5 3 8l4.5 4.5"/>'));
-// Bar replay: two left-pointing triangles.
-registerIcon('replay', S('<path d="M14 4.2v7.6L8.6 8z"/><path d="M7.4 4.2v7.6L2 8z"/>'));
+// Bar replay: two filled left-pointing triangles, nudged left so their visual centre (the
+// triangles weigh at their flat edges) sits on the 16px grid's centre.
+registerIcon('replay', S('<path d="M13.2 3.8v8.4L7.4 8z" fill="currentColor"/><path d="M6.8 3.8v8.4L1 8z" fill="currentColor"/>'));
 registerIcon('check', S('<path d="m2.8 8.4 3.4 3.4 7-7.6"/>'));
 registerIcon('close', S('<path d="m3.8 3.8 8.4 8.4M12.2 3.8l-8.4 8.4"/>'));
 // A pushpin — outline while something floats (press to pin it), filled once pinned.

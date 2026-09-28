@@ -123,6 +123,13 @@ describe('CrosshairRenderer under an override', () => {
         expect(rec.strokes[0]).toEqual({ style: '#2962ff', dash: [], alpha: 1 });
     });
 
+    it('the vertical line lands on the pixel grid for its width: half pixel when odd, pixel edge when even', () => {
+        const xOf = (width?: number): number => paint({ horizontal: false, ...(width ? { width } : {}) }).segments.find(isVertical)!.from[0];
+        expect(xOf()).toBe(100.5); // the configured 1px crosshair
+        expect(xOf(2)).toBe(100);
+        expect(xOf(3)).toBe(100.5);
+    });
+
     it('shadeRight veils the plot from the bar right edge to the price scale, under the line', () => {
         const rec = paint({ horizontal: false, shadeRight: { color: '#101010', opacity: 0.6 } });
         // cursor x=100 → bar 10 at x=100; its right edge is logical 10.5 → x=105; plot is 380×280

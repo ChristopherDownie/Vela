@@ -59,7 +59,7 @@ export class CrosshairRenderer {
 
         // snap the vertical line to the nearest bar center
         const logical = Math.round(coords.xToLogical(ch.x));
-        const x = Math.round(coords.logicalToX(logical)) + 0.5;
+        const x = crisp(coords.logicalToX(logical), ov?.width ?? cs.width);
         if (vertical && ov?.shadeRight) {
             // From the bar's right edge: the bar under the line stays in the clear.
             const from = Math.max(0, Math.round(coords.logicalToX(logical + 0.5)));
@@ -127,7 +127,7 @@ export class CrosshairRenderer {
         const ov = scene.crosshairOverride;
         const dataW = coords.width;
         const dataH = coords.height;
-        const x = Math.round(ext.x) + 0.5;
+        const x = crisp(ext.x, ov?.width ?? cs.width);
         if (ov?.vertical === false) return;
         if (ov?.shadeRight) {
             // Even with the ghost off the window: left of it, every bar in view is veiled.
@@ -201,6 +201,12 @@ export class CrosshairRenderer {
         ctx.fillText(text, rx + w / 2, ry + h / 2 + (below ? 2 : 0));
         ctx.textAlign = 'start';
     }
+}
+
+/** A vertical line's x on the pixel grid: odd widths centre on a half pixel, even ones on
+ *  a pixel edge — either way the stroke fills whole pixels instead of blurring across two. */
+function crisp(px: number, width: number): number {
+    return Math.round(px) + (Math.round(width) % 2 === 1 ? 0.5 : 0);
 }
 
 function setDash(ctx: CanvasRenderingContext2D, style: LineStyle): void {
