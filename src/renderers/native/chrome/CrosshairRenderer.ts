@@ -28,7 +28,7 @@ export class CrosshairRenderer {
     /** Clear the cursor canvas and (re)draw the crosshair lines + axis chips. The optional
      *  `separatorHoverY` highlights the draggable pane separator under the cursor;
      *  `external` is a SYNCED ghost crosshair (another chart's pointer, pixel-resolved). */
-    render(scene: SceneGraph, coords: CoordinateSystem, theme: VelaTheme, separatorHoverY: number | null = null, external: { x: number; y: number | null; time: number; price?: number | null } | null = null): void {
+    render(scene: SceneGraph, coords: CoordinateSystem, theme: VelaTheme, separatorHoverY: number | null = null, external: { x: number; y: number | null; time: number; price?: number | null; line?: boolean } | null = null): void {
         const ctx = this.ctx;
         const canvas = this.canvas;
         if (!ctx || !canvas) return;
@@ -51,21 +51,38 @@ export class CrosshairRenderer {
         if (!ch || ch.x < 0 || ch.x > dataW || ch.y < 0 || ch.y > dataH) return;
 
         const cs = scene.style.crosshair;
+        const ov = scene.crosshairOverride;
+        const vertical = ov?.vertical !== false;
+        const horizontal = ov?.horizontal !== false;
         ctx.font = `${scene.style.fontSize}px ${theme.fontFamily}`;
         ctx.textBaseline = 'middle';
 
         // snap the vertical line to the nearest bar center
         const logical = Math.round(coords.xToLogical(ch.x));
-        const x = Math.round(coords.logicalToX(logical)) + 0.5;
-        ctx.strokeStyle = cs.color ?? theme.textColor;
-        ctx.lineWidth = cs.width;
-        ctx.globalAlpha = cs.opacity;
-        setDash(ctx, cs.style);
+        const x = crisp(coords.logicalToX(logical), ov?.width ?? cs.width);
+        if (vertical && ov?.shadeRight) {
+            // From the bar's right edge: the bar under the line stays in the clear.
+            const from = Math.max(0, Math.round(coords.logicalToX(logical + 0.5)));
+            if (from < dataW) {
+                ctx.fillStyle = ov.shadeRight.color;
+                ctx.globalAlpha = ov.shadeRight.opacity ?? 1;
+                ctx.fillRect(from, 0, dataW - from, dataH);
+                ctx.globalAlpha = 1;
+            }
+        }
+        ctx.strokeStyle = ov?.color ?? cs.color ?? theme.textColor;
+        ctx.lineWidth = ov?.width ?? cs.width;
+        ctx.globalAlpha = ov?.opacity ?? cs.opacity;
+        setDash(ctx, ov?.style ?? cs.style);
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, dataH);
-        ctx.moveTo(0, Math.round(ch.y) + 0.5);
-        ctx.lineTo(dataW, Math.round(ch.y) + 0.5);
+        if (vertical) {
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, dataH);
+        }
+        if (horizontal) {
+            ctx.moveTo(0, Math.round(ch.y) + 0.5);
+            ctx.lineTo(dataW, Math.round(ch.y) + 0.5);
+        }
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
@@ -83,12 +100,12 @@ export class CrosshairRenderer {
         }
         const chipBg = cs.labelBackground ?? theme.borderColor;
         // An unscaled pane (axisFormat 'none') has no value axis, so no value chip either.
-        if (pane && pane.axisFormat !== 'none') {
+        if (horizontal && pane && pane.axisFormat !== 'none') {
             const price = coords.yToPrice(ch.y, pane.scale, pane.bounds);
             this.chip(ctx, dataW + 1, ch.y, formatAxisValue(pane.scale, pane.bounds.height, price, percentScaleFor(scene, pane), scene.priceMintick, pane.axisFormat), chipBg, 'left', false, theme.background);
         }
         // time chip on the bottom axis
-        this.chip(ctx, x, dataH + 1, formatTimeStamp(coords.logicalToTime(logical), scene.timezone, coords.barInterval), chipBg, 'center', true, theme.background);
+        if (vertical) this.chip(ctx, x, dataH + 1, formatTimeStamp(coords.logicalToTime(logical), scene.timezone, coords.barInterval), chipBg, 'center', true, theme.background);
     }
 
     destroy(): void {
@@ -101,23 +118,38 @@ export class CrosshairRenderer {
      *  along), with that bar's time chip in this chart's own timezone and — when the
      *  level resolved — the price chip on the right axis. The snap happened upstream
      *  (`externalCrossPx`, floor-to-containing-bar) — this method only draws. Chips
-     *  render slightly dimmed so the ghost still reads as foreign. */
-    private drawExternal(ctx: CanvasRenderingContext2D, ext: { x: number; y: number | null; time: number; price?: number | null }, scene: SceneGraph, coords: CoordinateSystem, theme: VelaTheme): void {
+     *  render slightly dimmed so the ghost still reads as foreign. A `crosshairOverride`
+     *  applies to the ghost as well — its line style, a dropped horizontal line, and the
+     *  `shadeRight` veil from the ghost bar's right edge — so a pick that spans several
+     *  charts reads the same on every one of them. */
+    private drawExternal(ctx: CanvasRenderingContext2D, ext: { x: number; y: number | null; time: number; price?: number | null; line?: boolean }, scene: SceneGraph, coords: CoordinateSystem, theme: VelaTheme): void {
         const cs = scene.style.crosshair;
+        const ov = scene.crosshairOverride;
         const dataW = coords.width;
         const dataH = coords.height;
-        const x = Math.round(ext.x) + 0.5;
-        if (x < 0 || x > dataW) return;
+        const x = crisp(ext.x, ov?.width ?? cs.width);
+        if (ov?.vertical === false) return;
+        if (ov?.shadeRight) {
+            // Even with the ghost off the window: left of it, every bar in view is veiled.
+            const from = Math.max(0, Math.round(coords.logicalToX(Math.round(coords.xToLogical(ext.x)) + 0.5)));
+            if (from < dataW) {
+                ctx.fillStyle = ov.shadeRight.color;
+                ctx.globalAlpha = ov.shadeRight.opacity ?? 1;
+                ctx.fillRect(from, 0, dataW - from, dataH);
+                ctx.globalAlpha = 1;
+            }
+        }
+        if (ext.line === false || x < 0 || x > dataW) return;
         ctx.font = `${scene.style.fontSize}px ${theme.fontFamily}`;
         ctx.textBaseline = 'middle';
-        ctx.strokeStyle = cs.color ?? theme.textColor;
-        ctx.lineWidth = cs.width;
-        ctx.globalAlpha = cs.opacity * 0.55; // a ghost — dimmer than the local crosshair
-        setDash(ctx, cs.style);
+        ctx.strokeStyle = ov?.color ?? cs.color ?? theme.textColor;
+        ctx.lineWidth = ov?.width ?? cs.width;
+        ctx.globalAlpha = (ov?.opacity ?? cs.opacity) * 0.55; // a ghost — dimmer than the local crosshair
+        setDash(ctx, ov?.style ?? cs.style);
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, dataH);
-        if (ext.y != null) {
+        if (ext.y != null && ov?.horizontal !== false) {
             ctx.moveTo(0, Math.round(ext.y) + 0.5);
             ctx.lineTo(dataW, Math.round(ext.y) + 0.5);
         }
@@ -126,7 +158,7 @@ export class CrosshairRenderer {
         ctx.lineWidth = 1;
         ctx.globalAlpha = 0.8; // chips stay readable but still read as foreign
         const chipBg = cs.labelBackground ?? theme.borderColor;
-        if (ext.y != null && ext.price != null) {
+        if (ext.y != null && ext.price != null && ov?.horizontal !== false) {
             // Same chip the local crosshair puts on the axis, at the ghost's level —
             // formatted on the pane under the line (the price pane, by construction).
             let pane: PaneNode | undefined;
@@ -169,6 +201,12 @@ export class CrosshairRenderer {
         ctx.fillText(text, rx + w / 2, ry + h / 2 + (below ? 2 : 0));
         ctx.textAlign = 'start';
     }
+}
+
+/** A vertical line's x on the pixel grid: odd widths centre on a half pixel, even ones on
+ *  a pixel edge — either way the stroke fills whole pixels instead of blurring across two. */
+function crisp(px: number, width: number): number {
+    return Math.round(px) + (Math.round(width) % 2 === 1 ? 0.5 : 0);
 }
 
 function setDash(ctx: CanvasRenderingContext2D, style: LineStyle): void {
