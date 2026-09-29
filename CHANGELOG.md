@@ -6,6 +6,10 @@ All notable changes to Vela, newest first.
 
 ### Fixed
 
+- **Double-clicking while drawing no longer collapses the sub panes.** Clicking twice in
+  quick succession with a drawing tool, the ruler, or the eraser active (or right after
+  finishing a placement) used to toggle the sub panes as if you had double-clicked in
+  cursor mode. That toggle now happens only from a plain double-click.
 - **The color picker's opacity percentage is editable.** The percentage next to the opacity
   slider was a static label. You can now click it and type a value from 0 to 100 (with or
   without the `%` sign), then press Enter or click away to apply it. Values outside the
