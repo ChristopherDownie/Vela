@@ -2,6 +2,15 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Fixed
+
+- **The color picker's opacity percentage is editable.** The percentage next to the opacity
+  slider was a static label. You can now click it and type a value from 0 to 100 (with or
+  without the `%` sign), then press Enter or click away to apply it. Values outside the
+  range are clamped, and text that isn't a number restores the current opacity.
+
 ## [0.8.0]
 
 ### Added
