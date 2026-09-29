@@ -2,6 +2,14 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Changed
+
+- **Vela's home is velacharts.dev.** The attribution mark, the package homepage and the
+  project links now point to Vela's own site instead of a page on luxalgo.com. Nothing
+  changes in the API.
+
 ## [0.8.0]
 
 ### Added
