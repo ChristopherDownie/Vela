@@ -12,7 +12,7 @@
   [![License][license-img]][license-link]
 
   <p>
-    <a href="https://luxalgo.com/vela">Homepage</a> ·
+    <a href="https://velacharts.dev">Homepage</a> ·
     <a href="#quick-start">Quick start</a> ·
     <a href="docs/index.md">Documentation</a> ·
     <a href="#extending-plugin-sdk">Plugin SDK</a> ·
@@ -201,7 +201,7 @@ grateful when the watermark stays in a visible spot.
 No scripting engine ships with this package; the Pine Script addon
 (`@luxalgo/vela-pinets`) is AGPL-3.0 and licensed separately (see *Indicators*).
 
-[homepage]: https://luxalgo.com/vela
+[homepage]: https://velacharts.dev
 
 [npm-version-img]: https://img.shields.io/npm/v/%40luxalgo%2Fvela.svg
 [npm-downloads-img]: https://img.shields.io/npm/dm/%40luxalgo%2Fvela.svg

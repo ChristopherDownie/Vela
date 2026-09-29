@@ -8,7 +8,7 @@ import { isDarkColor } from '../../../core/color';
 import { LUXALGO_SYMBOL_SVG, LUXALGO_WORDMARK_SVG } from './luxalgo-logos';
 
 /** Where the mark links — the canonical project page. */
-export const ATTRIBUTION_URL = 'https://luxalgo.com/vela';
+export const ATTRIBUTION_URL = 'https://velacharts.dev/?utm_source=vela&utm_medium=attribution';
 
 const STYLE_ID = 'vela-attribution-styles';
 const CSS = `
