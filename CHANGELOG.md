@@ -20,6 +20,10 @@ All notable changes to Vela, newest first.
   slider was a static label. You can now click it and type a value from 0 to 100 (with or
   without the `%` sign), then press Enter or click away to apply it. Values outside the
   range are clamped, and text that isn't a number restores the current opacity.
+- **Time-axis year and month labels sit on the calendar.** When zoomed out to month,
+  quarter or year spacing, axis labels and grid lines now land on the first of the month
+  and on January 1, so a year label marks the start of the year it names instead of a date
+  a couple of weeks before it.
 
 ## [0.8.0]
 
