@@ -2,7 +2,13 @@
 
 <div align="center">
 
-  <img src=".github/banner.png" alt="Vela™ — fast, extensible financial charts for the web" width="100%">
+  <a href="https://velacharts.dev">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/banner.png">
+      <source media="(prefers-color-scheme: light)" srcset=".github/banner-light.png">
+      <img src=".github/banner.png" alt="Vela™ by LuxAlgo" width="100%">
+    </picture>
+  </a>
 
   <p><strong>Fast, extensible financial charts for the web.</strong><br>
   Headless core · native WebGL2 renderer · batteries-included workspace · plugin SDK</p>
