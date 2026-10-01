@@ -41,7 +41,7 @@ touching the rest.
 - **`@luxalgo/vela/workspace`**: the full chart app. One chart or a grid of them under
   one shared topbar (symbol / timeframe / style / indicators), status line, symbol
   watermark, bottom bar (ranges, clock, timezone), object tree, keyboard-first UX
-  (type a letter for symbol search, a digit for timeframe entry, `?` for the shortcuts
+  (type a letter or `0` for symbol search, a digit 1–9 for timeframe entry, `?` for the shortcuts
   panel), named cells, sync groups, and one persisted state document.
 - **`@luxalgo/vela/ui`**: the component kit the app is built on. Design tokens, overlay
   chrome ([Zag.js](https://zagjs.com) menu/dialog/drawer/tooltip), form primitives, and

@@ -14,6 +14,13 @@ All notable changes to Vela, newest first.
   The size drops slightly (24 px instead of 28 px, 20 px on mobile) because the V is
   wider than the old symbol. Hosts that pass their own mark through
   `renderer.set('attribution', html)` are unaffected.
+- **The indicator picker lists the built-in indicators under "Built-in".** They were
+  grouped under "Vela", which reads as a product name now that charting apps carry it.
+- **Typing `0` opens the symbol search, and the timeframe entry shows capitals.** No
+  timeframe starts with 0, so typing `0` on a chart now opens the symbol search seeded
+  with it, the same as a letter; digits 1 to 9 still open the timeframe entry. Letters
+  in the timeframe entry now always display in capitals (`4H`, `3M`). What each entry
+  means is unchanged.
 
 ### Fixed
 
