@@ -9,6 +9,8 @@ All notable changes to Vela, newest first.
 - **Vela's home is velacharts.dev.** The attribution mark, the package homepage and the
   project links now point to Vela's own site instead of a page on luxalgo.com. Nothing
   changes in the API.
+- **The indicator picker lists the built-in indicators under "Built-in".** They were
+  grouped under "Vela", which reads as a product name now that charting apps carry it.
 
 ### Fixed
 
