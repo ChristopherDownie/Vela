@@ -9,6 +9,11 @@ All notable changes to Vela, newest first.
 - **Vela's home is velacharts.dev.** The attribution mark, the package homepage and the
   project links now point to Vela's own site instead of a page on luxalgo.com. Nothing
   changes in the API.
+- **Typing `0` opens the symbol search, and the timeframe entry shows capitals.** No
+  timeframe starts with 0, so typing `0` on a chart now opens the symbol search seeded
+  with it, the same as a letter; digits 1 to 9 still open the timeframe entry. Letters
+  in the timeframe entry now always display in capitals (`4H`, `3M`). What each entry
+  means is unchanged.
 
 ### Fixed
 
