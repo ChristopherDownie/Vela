@@ -9,6 +9,11 @@ All notable changes to Vela, newest first.
 - **Vela's home is velacharts.dev.** The attribution mark, the package homepage and the
   project links now point to Vela's own site instead of a page on luxalgo.com. Nothing
   changes in the API.
+- **The attribution mark is Vela's own.** The corner mark is now Vela's Morning Star V
+  instead of the LuxAlgo symbol, and hovering it reveals the rest of the Vela wordmark.
+  The size drops slightly (24 px instead of 28 px, 20 px on mobile) because the V is
+  wider than the old symbol. Hosts that pass their own mark through
+  `renderer.set('attribution', html)` are unaffected.
 - **The indicator picker lists the built-in indicators under "Built-in".** They were
   grouped under "Vela", which reads as a product name now that charting apps carry it.
 - **Typing `0` opens the symbol search, and the timeframe entry shows capitals.** No
