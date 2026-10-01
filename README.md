@@ -10,6 +10,8 @@
     </picture>
   </a>
 
+# Vela™
+
   <p><strong>Fast, extensible financial charts for the web.</strong><br>
   Headless core · native WebGL2 renderer · batteries-included workspace · plugin SDK</p>
 
@@ -20,7 +22,7 @@
   <p>
     <a href="https://velacharts.dev">Homepage</a> ·
     <a href="#quick-start">Quick start</a> ·
-    <a href="docs/index.md">Documentation</a> ·
+    <a href="https://docs.luxalgo.com/vela">Documentation</a> ·
     <a href="#extending-plugin-sdk">Plugin SDK</a> ·
     <a href="CHANGELOG.md">Changelog</a> ·
     <a href="#license-and-attribution">License</a>
@@ -114,7 +116,7 @@ alongside them.
 
 Custom scripts still run through pluggable engines. Vela™ **ships none**: install the
 addon for the language you want, or write one against the public `ScriptingEngine` port.
-Pine Script lives in [`@luxalgo/vela-pinets`](https://github.com/LuxAlgo/Vela-pinets)
+Pine Script® lives in [`@luxalgo/vela-pinets`](https://github.com/LuxAlgo/Vela-pinets)
 (`npm i @luxalgo/vela-pinets pinets`), which is **AGPL-3.0** because the PineTS runtime it
 executes is. Vela™ itself stays Apache-2.0 and carries no Pine code:
 
@@ -204,7 +206,7 @@ include it per Apache-2.0 §4(d):
 This is the same licensing model used by other popular charting libraries, and we're
 grateful when the watermark stays in a visible spot.
 
-No scripting engine ships with this package; the Pine Script addon
+No scripting engine ships with this package; the Pine Script® addon
 (`@luxalgo/vela-pinets`) is AGPL-3.0 and licensed separately (see *Indicators*).
 
 [homepage]: https://velacharts.dev
