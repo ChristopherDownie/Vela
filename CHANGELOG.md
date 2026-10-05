@@ -11,6 +11,9 @@ All notable changes to Vela, newest first.
   so each pointer move repaints one small layer instead of re-rasterizing and re-uploading
   a plot-sized texture through the data frame. It settles back under the candles on
   release. Placing a new drawing no longer triggers that data repaint on every move either.
+- **Keyboard focus comes back after a dialog is torn down.** When a host removed an open
+  dialog or drawer instead of closing it, focus was left on nothing and the next Tab started
+  from the top of the page. Focus now returns to the button that opened it.
 
 ### Added
 
