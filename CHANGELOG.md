@@ -6,9 +6,30 @@ All notable changes to Vela, newest first.
 
 ### Fixed
 
+- **Dragging a drawing that sits under the candles keeps up with the mouse.** While you
+  drag such a drawing (or a selection that includes one) it rides the top drawing layer,
+  so each pointer move repaints one small layer instead of re-rasterizing and re-uploading
+  a plot-sized texture through the data frame. It settles back under the candles on
+  release. Placing a new drawing no longer triggers that data repaint on every move either.
 - **Keyboard focus comes back after a dialog is torn down.** When a host removed an open
   dialog or drawer instead of closing it, focus was left on nothing and the next Tab started
   from the top of the page. Focus now returns to the button that opened it.
+
+### Added
+
+- **Fib retracement has a Reverse option.** The Levels dialog of a Fib retracement now
+  has a Reverse toggle that puts level 0 on the first point instead of the second.
+
+### Changed
+
+- **Fib retracement measures from the second point.** Level 0 now sits on the point you
+  place last and level 1 on the first, so the levels read as the pullback from the latest
+  swing. Turn on Reverse in the Levels dialog to get the previous layout. Retracements
+  already saved on a chart keep their current layout.
+- **A mouse drag stops where you release it.** Letting go of the chart after a drag no
+  longer carries it on with momentum, so a quick scrub back and forth lands exactly where
+  the pointer stopped. A finger flick on a touch screen still glides to a stop, and the
+  `animations.pan` option now governs that touch glide alone.
 
 ## [0.8.1]
 
