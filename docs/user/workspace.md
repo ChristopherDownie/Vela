@@ -513,9 +513,9 @@ they work from the very first keystroke, before any click.
 ### Following menus and panels
 
 Every menu, popover, dialog, drawer and side panel announces itself with a DOM event on its
-own element: `vela:open` once it shows, and `vela:close` as it starts to close, while it is
-still on screen and before it fades out or leaves the DOM. Both bubble, so one listener on the
-chart's container follows all of its chrome without watching the DOM:
+own element: `vela:surface-open` once it shows, and `vela:surface-close` as it starts to
+close, while it is still on screen and before it fades out or leaves the DOM. Both bubble, so
+one listener on the chart's container follows all of its chrome without watching the DOM:
 
 ```ts
 import { SURFACE_OPEN_EVENT, SURFACE_CLOSE_EVENT, type SurfaceEventDetail } from '@luxalgo/vela/ui';

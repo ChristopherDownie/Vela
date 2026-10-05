@@ -257,8 +257,9 @@ export class SidePanel {
             this.closing = false;
         }
         this.el.hidden = !open;
-        if (open) announceSurface(this.el, true, 'panel');
         this.onOpenChange?.(open);
+        // After the host heard it — a listener that closes the panel again then reports last.
+        if (open && !this.el.hidden) announceSurface(this.el, true, 'panel');
     }
 
     /** The scrolling body, for a panel filled from OUTSIDE the class — a contributed panel's

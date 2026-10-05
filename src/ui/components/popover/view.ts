@@ -161,8 +161,12 @@ export class Popover {
             this.hide();
         };
         const onReflow = (): void => this.place();
-        // Capture phase, deferred so the opening click does not immediately dismiss.
-        setTimeout(() => document.addEventListener('pointerdown', onOutside, true), 0);
+        // Capture phase, deferred so the opening click does not immediately dismiss — and only
+        // if this show is still the live one: a hide (or hide + show) in the same tick cleared or
+        // replaced the handler, and attaching it then would leave it behind for good.
+        setTimeout(() => {
+            if (this.onOutside === onOutside) document.addEventListener('pointerdown', onOutside, true);
+        }, 0);
         document.addEventListener('keydown', onKey, true);
         window.addEventListener('resize', onReflow, true);
         // A scroll anywhere (dialog body, chart container) moves the trigger while the

@@ -6,9 +6,9 @@
 // fade-out or removal), so it bubbles to the host like open does.
 
 /** Dispatched on a surface's element once it is shown. */
-export const SURFACE_OPEN_EVENT = 'vela:open';
+export const SURFACE_OPEN_EVENT = 'vela:surface-open';
 /** Dispatched on a surface's element as it starts to close, before it hides or leaves the DOM. */
-export const SURFACE_CLOSE_EVENT = 'vela:close';
+export const SURFACE_CLOSE_EVENT = 'vela:surface-close';
 
 /** What opened or closed: a menu (submenus included), a popover (select lists, color
  *  pickers, mark cards, the layout picker), a dialog, a drawer, or a side panel. */

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// Every surface of the chart's chrome announces itself: `vela:open` on its own element once
-// it shows, `vela:close` while it still shows (before it hides or leaves the DOM), both
+// Every surface of the chart's chrome announces itself: `vela:surface-open` on its own element
+// once it shows, `vela:surface-close` while it still shows (before it hides or leaves the DOM), both
 // bubbling to the host — so a host follows menus and panels without watching the DOM.
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 
@@ -12,7 +12,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 };
 
 import { Menu } from '../src/ui/components/menu/view';
-import { Popover } from '../src/ui/components/popover/view';
+import { Popover, eventDismissedPopover } from '../src/ui/components/popover/view';
 import { Dialog } from '../src/ui/components/dialog/view';
 import { Drawer } from '../src/ui/components/drawer/view';
 import { SidePanel } from '../src/widget/side-panel';
@@ -72,7 +72,7 @@ function button(host: HTMLElement): HTMLButtonElement {
 
 describe('surface open/close events', () => {
     it('names the event pair', () => {
-        expect([SURFACE_OPEN_EVENT, SURFACE_CLOSE_EVENT]).toEqual(['vela:open', 'vela:close']);
+        expect([SURFACE_OPEN_EVENT, SURFACE_CLOSE_EVENT]).toEqual(['vela:surface-open', 'vela:surface-close']);
     });
 
     it('menu: opens and closes on its list, with its trigger', async () => {
@@ -84,8 +84,8 @@ describe('surface open/close events', () => {
         menu.close();
         await settled();
         expect(heard.map((h) => [h.type, h.kind, h.target.className, h.trigger === trigger, h.showing])).toEqual([
-            ['vela:open', 'menu', 'vela-menu', true, true],
-            ['vela:close', 'menu', 'vela-menu', true, true],
+            ['vela:surface-open', 'menu', 'vela-menu', true, true],
+            ['vela:surface-close', 'menu', 'vela-menu', true, true],
         ]);
         menu.destroy();
     });
@@ -97,8 +97,8 @@ describe('surface open/close events', () => {
         await settled();
         menu.destroy();
         expect(heard.map((h) => [h.type, h.trigger])).toEqual([
-            ['vela:open', null],
-            ['vela:close', null],
+            ['vela:surface-open', null],
+            ['vela:surface-close', null],
         ]);
     });
 
@@ -111,8 +111,8 @@ describe('surface open/close events', () => {
         pop.hide();
         pop.hide();
         expect(heard.map((h) => [h.type, h.kind, h.target === pop.el, h.trigger === trigger, h.showing])).toEqual([
-            ['vela:open', 'popover', true, true, true],
-            ['vela:close', 'popover', true, true, true],
+            ['vela:surface-open', 'popover', true, true, true],
+            ['vela:surface-close', 'popover', true, true, true],
         ]);
         expect(pop.el.isConnected).toBe(false);
     });
@@ -122,19 +122,102 @@ describe('surface open/close events', () => {
         const pop = new Popover({ trigger: button(host), host, fadeMs: 120 });
         pop.show();
         pop.hide();
-        expect(heard.map((h) => h.type)).toEqual(['vela:open', 'vela:close']);
+        expect(heard.map((h) => h.type)).toEqual(['vela:surface-open', 'vela:surface-close']);
         expect(pop.el.isConnected).toBe(true); // still fading out
     });
 
-    it('popover: a listener that hides it on open leaves no dismiss handlers behind', () => {
+    /** Press outside every surface once the deferred outside-dismiss could have attached, and
+     *  report whether a popover handler still claimed the press (and Escape) as its dismissal. */
+    async function strayDismissHandlers(host: HTMLElement): Promise<{ outside: boolean; escape: boolean }> {
+        await settled();
+        const elsewhere = button(host);
+        let outside = false;
+        const read = (e: Event): void => {
+            outside = eventDismissedPopover(e);
+        };
+        document.addEventListener('pointerdown', read);
+        elsewhere.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+        document.removeEventListener('pointerdown', read);
+        const esc = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        document.dispatchEvent(esc);
+        return { outside, escape: esc.defaultPrevented };
+    }
+
+    it('popover: a listener that hides it on open leaves no dismiss handlers behind', async () => {
         const { host } = hostWithEar();
         const pop = new Popover({ trigger: button(host), host });
         host.addEventListener(SURFACE_OPEN_EVENT, () => pop.hide(), { once: true });
         pop.show();
         expect(pop.open).toBe(false);
-        const esc = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-        document.dispatchEvent(esc);
-        expect(esc.defaultPrevented).toBe(false); // a stale Escape handler would swallow it
+        expect(await strayDismissHandlers(host)).toEqual({ outside: false, escape: false });
+    });
+
+    it('popover: a show() then hide() in the same tick leaves no outside-dismiss behind', async () => {
+        const { host } = hostWithEar();
+        const pop = new Popover({ trigger: button(host), host });
+        pop.show();
+        pop.hide();
+        expect(await strayDismissHandlers(host)).toEqual({ outside: false, escape: false });
+    });
+
+    it('popover: a reopen in the same tick keeps exactly the live outside-dismiss', async () => {
+        const { host } = hostWithEar();
+        const pop = new Popover({ trigger: button(host), host });
+        pop.show();
+        pop.hide();
+        pop.show();
+        await settled();
+        button(host).dispatchEvent(new Event('pointerdown', { bubbles: true }));
+        expect(pop.open).toBe(false); // the second show's handler attached and dismissed it
+        expect(await strayDismissHandlers(host)).toEqual({ outside: false, escape: false });
+    });
+
+    it('side panel: a listener that closes it on open leaves the host told it is closed', () => {
+        const { host } = hostWithEar();
+        const panel = new SidePanel(host, 'Objects', 'vela-test');
+        const told: boolean[] = [];
+        panel.onOpenChange = (open) => told.push(open);
+        host.addEventListener(SURFACE_OPEN_EVENT, () => panel.toggle(false), { once: true });
+        panel.toggle(true);
+        expect(panel.open).toBe(false);
+        expect(told).toEqual([true, false]);
+    });
+
+    it.each([
+        ['menu', (host: HTMLElement, told: (open: boolean) => void) => new Menu({ host, items: [{ id: 'a', label: 'A' }], onOpenChange: told })],
+        ['dialog', (host: HTMLElement, told: (open: boolean) => void) => new Dialog({ host, onOpenChange: told })],
+        ['drawer', (host: HTMLElement, told: (open: boolean) => void) => new Drawer({ host, onOpenChange: told })],
+    ] as const)('%s: a listener that closes it on open leaves the host told it is closed', async (_, make) => {
+        const { host } = hostWithEar();
+        const told: boolean[] = [];
+        const view = make(host, (open) => told.push(open));
+        const close = (): void => ('close' in view ? view.close() : view.hide());
+        host.addEventListener(SURFACE_OPEN_EVENT, close, { once: true });
+        if ('open' in view && typeof view.open === 'function') view.open();
+        else (view as Dialog | Drawer).show();
+        await settled();
+        expect(told).toEqual([true, false]);
+        view.destroy();
+    });
+
+    it('layout picker: a listener that closes it on open leaves the host told it is closed', () => {
+        const { host } = hostWithEar();
+        const told: boolean[] = [];
+        const picker = new LayoutPicker({
+            trigger: button(host),
+            host,
+            shape: () => ({ rows: 1, cols: 1 }),
+            presets: () => [],
+            onSelectGrid: () => {},
+            onSelectPreset: () => {},
+            syncs: () => [],
+            onToggleSync: () => {},
+            onOpenChange: (open) => told.push(open),
+        });
+        host.addEventListener(SURFACE_OPEN_EVENT, () => picker.close(), { once: true });
+        picker.open();
+        expect(told).toEqual([true, false]);
+        picker.destroy();
     });
 
     it('popover and side panel: a listener that closes again on close does not re-enter', () => {
@@ -150,10 +233,10 @@ describe('surface open/close events', () => {
         panel.toggle(true);
         panel.toggle(false);
         expect(heard.map((h) => [h.type, h.kind])).toEqual([
-            ['vela:open', 'popover'],
-            ['vela:close', 'popover'],
-            ['vela:open', 'panel'],
-            ['vela:close', 'panel'],
+            ['vela:surface-open', 'popover'],
+            ['vela:surface-close', 'popover'],
+            ['vela:surface-open', 'panel'],
+            ['vela:surface-close', 'panel'],
         ]);
         expect(panel.open).toBe(false);
     });
@@ -172,8 +255,8 @@ describe('surface open/close events', () => {
             view.hide();
             await settled();
             expect(heard.map((h) => [h.type, h.kind, h.target.classList.contains(`vela-${kind}`), h.trigger === opener, h.showing])).toEqual([
-                ['vela:open', kind, true, true, true],
-                ['vela:close', kind, true, true, true],
+                ['vela:surface-open', kind, true, true, true],
+                ['vela:surface-close', kind, true, true, true],
             ]);
             view.destroy();
             expect(heard).toHaveLength(2);
@@ -186,7 +269,7 @@ describe('surface open/close events', () => {
             await settled();
             view.destroy();
             await settled();
-            expect(heard.map((h) => h.type)).toEqual(['vela:open', 'vela:close']);
+            expect(heard.map((h) => h.type)).toEqual(['vela:surface-open', 'vela:surface-close']);
             expect(heard[0]!.trigger).toBeNull(); // focus sat on <body>: no opener to name
         });
     });
@@ -200,10 +283,10 @@ describe('surface open/close events', () => {
         panel.toggle(true);
         panel.destroy();
         expect(heard.map((h) => [h.type, h.kind, h.target === panel.el, h.showing])).toEqual([
-            ['vela:open', 'panel', true, true],
-            ['vela:close', 'panel', true, true],
-            ['vela:open', 'panel', true, true],
-            ['vela:close', 'panel', true, true],
+            ['vela:surface-open', 'panel', true, true],
+            ['vela:surface-close', 'panel', true, true],
+            ['vela:surface-open', 'panel', true, true],
+            ['vela:surface-close', 'panel', true, true],
         ]);
     });
 
@@ -223,8 +306,8 @@ describe('surface open/close events', () => {
         picker.open();
         picker.close();
         expect(heard.map((h) => [h.type, h.kind, h.target.className, h.trigger === trigger, h.showing])).toEqual([
-            ['vela:open', 'popover', 'vela-lp', true, true],
-            ['vela:close', 'popover', 'vela-lp', true, true],
+            ['vela:surface-open', 'popover', 'vela-lp', true, true],
+            ['vela:surface-close', 'popover', 'vela-lp', true, true],
         ]);
         picker.destroy();
         expect(heard).toHaveLength(2);

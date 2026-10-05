@@ -301,8 +301,9 @@ export class LayoutPicker {
         this.opts.trigger.setAttribute('aria-expanded', 'true');
         this.doc.addEventListener('pointerdown', this.onDocPointerDown, true);
         this.doc.addEventListener('keydown', this.onDocKeydown, true);
-        announceSurface(this.panel, true, 'popover', this.opts.trigger);
         this.opts.onOpenChange?.(true);
+        // After the host heard it — a listener that closes the picker again then reports last.
+        if (this.isOpen) announceSurface(this.panel, true, 'popover', this.opts.trigger);
     }
 
     close(): void {
