@@ -2,6 +2,20 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Added
+
+- **Fib retracement has a Reverse option.** The Levels dialog of a Fib retracement now
+  has a Reverse toggle that puts level 0 on the first point instead of the second.
+
+### Changed
+
+- **Fib retracement measures from the second point.** Level 0 now sits on the point you
+  place last and level 1 on the first, so the levels read as the pullback from the latest
+  swing. Turn on Reverse in the Levels dialog to get the previous layout. Retracements
+  already saved on a chart keep their current layout.
+
 ## [0.8.1]
 
 ### Changed
