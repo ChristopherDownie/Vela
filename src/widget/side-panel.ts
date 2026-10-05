@@ -13,6 +13,7 @@
 // with the dock state.
 import { injectStyles } from '../ui/styles';
 import { iconEl } from '../ui/icons';
+import { announceSurface } from '../ui/surface-events';
 
 const STYLE_ID = 'vela-widget-sidepanel';
 
@@ -188,6 +189,8 @@ export class SidePanel {
     private readonly floatable: boolean;
     private overlayOn: boolean;
     private readonly pin: HTMLButtonElement | null = null;
+    /** Set while the close is announced, so a listener's own close does not re-enter. */
+    private closing = false;
 
     /** `modifier` is the panel's own class, carrying its content styles (e.g. `vela-ot`). */
     constructor(host: HTMLElement, title: string, modifier: string, opts: SidePanelOptions = {}) {
@@ -246,8 +249,15 @@ export class SidePanel {
 
     /** Open/close the panel — a bare call flips it. */
     toggle(open = this.el.hidden): void {
-        if (open === !this.el.hidden) return;
+        if (open === !this.el.hidden || (!open && this.closing)) return;
+        // Close announces while the panel still shows, open once it does.
+        if (!open) {
+            this.closing = true;
+            announceSurface(this.el, false, 'panel');
+            this.closing = false;
+        }
         this.el.hidden = !open;
+        if (open) announceSurface(this.el, true, 'panel');
         this.onOpenChange?.(open);
     }
 
@@ -309,6 +319,7 @@ export class SidePanel {
     }
 
     destroy(): void {
+        if (this.open) announceSurface(this.el, false, 'panel');
         this.el.remove();
     }
 

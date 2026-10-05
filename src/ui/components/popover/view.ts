@@ -3,6 +3,7 @@
 import type { VelaTheme } from '../../../core/options';
 import { injectStyles } from '../../styles';
 import { ensureUIHost, floatingLayerHost } from '../../tokens';
+import { announceSurface } from '../../surface-events';
 import {
     insetRect,
     intersectRects,
@@ -170,10 +171,16 @@ export class Popover {
         this.onOutside = onOutside;
         this.onKey = onKey;
         this.onReflow = onReflow;
+        // Last: a listener may hide it again at once, and must find it fully open.
+        announceSurface(this.el, true, 'popover', this.trigger);
     }
 
     hide(): void {
         if (!this.shown) return;
+        // Closed before announcing (a listener's own hide() must not re-enter), but still
+        // attached — a fade-out or removal follows — so the close bubbles to the host.
+        this.shown = false;
+        announceSurface(this.el, false, 'popover', this.trigger);
         if (this.onOutside) document.removeEventListener('pointerdown', this.onOutside, true);
         if (this.onKey) document.removeEventListener('keydown', this.onKey, true);
         if (this.onReflow) {
@@ -194,7 +201,6 @@ export class Popover {
         } else {
             this.el.remove();
         }
-        this.shown = false;
         if (open === this) open = null;
         this.ctrl.onClose?.();
     }
