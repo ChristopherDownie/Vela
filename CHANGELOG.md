@@ -11,6 +11,7 @@ All notable changes to Vela, newest first.
   so each pointer move repaints one small layer instead of re-rasterizing and re-uploading
   a plot-sized texture through the data frame. It settles back under the candles on
   release. Placing a new drawing no longer triggers that data repaint on every move either.
+
 ### Added
 
 - **Fib retracement has a Reverse option.** The Levels dialog of a Fib retracement now
@@ -22,6 +23,10 @@ All notable changes to Vela, newest first.
   place last and level 1 on the first, so the levels read as the pullback from the latest
   swing. Turn on Reverse in the Levels dialog to get the previous layout. Retracements
   already saved on a chart keep their current layout.
+- **A mouse drag stops where you release it.** Letting go of the chart after a drag no
+  longer carries it on with momentum, so a quick scrub back and forth lands exactly where
+  the pointer stopped. A finger flick on a touch screen still glides to a stop, and the
+  `animations.pan` option now governs that touch glide alone.
 
 ## [0.8.1]
 
