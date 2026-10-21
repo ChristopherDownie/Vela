@@ -46,6 +46,7 @@ import { AxisScaleButtons, type AxisScaleView } from './chrome/AxisScaleButtons'
 import { NATIVE_CAPABILITIES, supportsWebGL2 } from './capabilities';
 import { WebGL2Backend } from './backend/WebGL2Backend';
 import { CoordinateSystem, type PaneBounds, type PriceScale } from './core/CoordinateSystem';
+import { pinPlotCanvas } from './core/plotDirection';
 import { Scheduler, InvalidateLevel, repaintsData, repaintsChrome } from './core/Scheduler';
 import { Animator, EaseSetting, easeToward } from './core/Animator';
 import { InputController } from './core/InputController';
@@ -1434,13 +1435,11 @@ export class NativeRenderer implements IChartRenderer {
 
         // L-2 backdrop: session highlights + gridlines, the very BOTTOM of the pile — even
         // an SDK layer canvas slotted below the data canvas stays above the grid.
-        this.backdropCanvas = document.createElement('canvas');
-        Object.assign(this.backdropCanvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
+        this.backdropCanvas = this.createPlotCanvas();
 
         // L0.25 volume columns: bottom-anchored per-bar volume, ABOVE the geometry canvas so
         // grid lines and candles cannot paint over them. Transparent + pointer-transparent.
-        this.volumeCanvas = document.createElement('canvas');
-        Object.assign(this.volumeCanvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
+        this.volumeCanvas = this.createPlotCanvas();
 
         // L0 geometry — the swappable backend (WebGL2 if available, else canvas2d)
         // owns the data canvas + gets its rendering context.
@@ -1448,24 +1447,20 @@ export class NativeRenderer implements IChartRenderer {
 
         // L0.6 VPVR: the visible-range volume profile against the right edge, painted ABOVE
         // the candles (it reads over them, translucent) but below the chrome/axes.
-        this.vpvrCanvas = document.createElement('canvas');
-        Object.assign(this.vpvrCanvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
+        this.vpvrCanvas = this.createPlotCanvas();
 
         // L1 chrome (canvas2d): Pine drawings + axes + current-price line. Transparent,
         // above the geometry layer (so the GL backend never has to rasterize text).
-        this.chromeCanvas = document.createElement('canvas');
-        Object.assign(this.chromeCanvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
+        this.chromeCanvas = this.createPlotCanvas();
 
         // L1.5 user drawings: trend lines/boxes/labels + selection handles + the live
         // placing ghost. Above Pine drawings (chrome), below the crosshair. Transparent +
         // pointer-transparent — pointer events reach the data canvas (InputController),
         // which hands gestures to the drawings layer via the region-claim seam.
-        this.drawingsCanvas = document.createElement('canvas');
-        Object.assign(this.drawingsCanvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
+        this.drawingsCanvas = this.createPlotCanvas();
 
         // L2 cursor: the crosshair, repainted alone on the cheap Cursor tier.
-        this.cursorCanvas = document.createElement('canvas');
-        Object.assign(this.cursorCanvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
+        this.cursorCanvas = this.createPlotCanvas();
 
         // The `shadeRight` veil's styleable twin, just under the cursor canvas: host CSS on
         // `.vela-shade-right` (a `backdrop-filter`) reaches the candles beneath it but never the
@@ -1488,7 +1483,7 @@ export class NativeRenderer implements IChartRenderer {
         Object.assign(this.plot.style, { position: 'absolute', top: '0', right: '0', bottom: '0', left: '0' });
         // SDK renderer layers: one transparent canvas each, stacked by placement —
         // 'below-data' behind the candles, 'above-data' over them (under the chrome/axes).
-        this.extLayers = rendererLayers().map((def) => ({ def, instance: def.create(), canvas: this.createLayerCanvas(), channel: def.id, owner: null }));
+        this.extLayers = rendererLayers().map((def) => ({ def, instance: def.create(), canvas: this.createPlotCanvas(), channel: def.id, owner: null }));
         const below = this.extLayers.filter((l) => l.def.placement === 'below-data').map((l) => l.canvas);
         const above = this.extLayers.filter((l) => l.def.placement !== 'below-data').map((l) => l.canvas);
         this.plot.append(this.backdropCanvas, ...below, this.dataCanvas, this.volumeCanvas, this.vpvrCanvas, ...above, this.chromeCanvas, this.drawingsCanvas, this.shadeRightEl, this.cursorCanvas, this.overlayRoot);
@@ -1748,9 +1743,7 @@ export class NativeRenderer implements IChartRenderer {
      * and a fresh one is made for canvas2d.
      */
     private makeDataCanvas(): HTMLCanvasElement {
-        const c = document.createElement('canvas');
-        Object.assign(c.style, { position: 'absolute', inset: '0', width: '100%', height: '100%' });
-        return c;
+        return this.createPlotCanvas({ pointerEvents: true });
     }
 
     private createGeometryBackend(): HTMLCanvasElement {
@@ -3852,11 +3845,16 @@ export class NativeRenderer implements IChartRenderer {
         return null;
     }
 
-    /** One transparent, pointer-transparent SDK layer canvas covering the plot. */
-    private createLayerCanvas(): HTMLCanvasElement {
+    /**
+     * Every canvas of the plot's pile comes from here: absolutely placed over the whole plot,
+     * pointer-transparent unless it is the data canvas (which takes the gestures), and pinned
+     * left to right whatever the page's direction (see `pinPlotCanvas`).
+     */
+    private createPlotCanvas(opts: { pointerEvents?: boolean } = {}): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
-        Object.assign(canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
-        return canvas;
+        Object.assign(canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%' });
+        if (!opts.pointerEvents) canvas.style.pointerEvents = 'none';
+        return pinPlotCanvas(canvas);
     }
 
     /**
@@ -3873,7 +3871,7 @@ export class NativeRenderer implements IChartRenderer {
         if (this.extLayers.some((l) => l.owner === model.id)) return;
         const base = this.extLayers.find((l) => l.owner === null && l.def.id === model.native!.type);
         if (!base) return; // no layer registered for the type — the model paints through its series alone
-        const canvas = this.createLayerCanvas();
+        const canvas = this.createPlotCanvas();
         // Match the pile's current backing size; the next resize re-sizes every layer anyway.
         canvas.width = this.dataCanvas.width;
         canvas.height = this.dataCanvas.height;

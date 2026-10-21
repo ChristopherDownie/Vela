@@ -27,6 +27,7 @@ import { MeasureOverlay } from './MeasureOverlay';
 import { topDrawingAt, deletableSelection, deleteTargets, HIT_TOLERANCE } from './DrawingHitTester';
 import { keyToDrawingAction, isEditingText } from './DrawingKeys';
 import type { DrawingSlice } from '../core/SceneGraph';
+import { beginPlotFrame } from '../core/plotDirection';
 
 /** Shown in the inline editor while a label carries no text yet. */
 const TEXT_PLACEHOLDER = 'Enter Text';
@@ -988,7 +989,7 @@ export class UserDrawingController implements IDrawingsRendererPort {
             }
             const sctx = canvas.getContext('2d');
             if (!sctx) continue;
-            sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            beginPlotFrame(sctx, dpr);
             sctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
             this.painter.seriesLook = this.deps.seriesLook();
             this.painter.paintAll(sctx, drawings, proj, theme, EMPTY_TARGETS);
@@ -1009,7 +1010,7 @@ export class UserDrawingController implements IDrawingsRendererPort {
         const ctx = this.ctx;
         if (!ctx) return;
         const dpr = this.deps.dpr();
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        beginPlotFrame(ctx, dpr);
         ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
         const proj = this.deps.projector();
         // A transparent inline editor overlays the label it edits — mute the canvas copy so the

@@ -110,6 +110,9 @@ const CSS = `
 .vela-statusline .vela-sl-values { font-variant-numeric: tabular-nums; }
 .vela-statusline .vela-sl-ohlc { display: flex; gap: var(--vela-space-1); color: var(--vela-fg-muted); }
 .vela-statusline .vela-sl-ohlc b { color: var(--vela-fg); font-weight: 500; }
+/* Prices and the signed change are left-to-right isolates (each carries dir="ltr"): inside a
+ * right-to-left page the row's order mirrors, but a sign stays in front of its number. */
+.vela-statusline .vela-sl-ohlc b, .vela-statusline .vela-sl-change { unicode-bidi: isolate; }
 /* The change value wears the SAME ink as the OHLC values (set inline per render) —
  * these are the pre-ink fallbacks only. */
 .vela-statusline .vela-sl-change[data-dir='up'] { color: var(--vela-up); }
@@ -365,6 +368,7 @@ export class Statusline {
         this.ohlcEl.className = 'vela-sl-ohlc';
         this.changeEl = doc.createElement('span');
         this.changeEl.className = 'vela-sl-change';
+        this.changeEl.dir = 'ltr';
         // Show-chart eye: takes the value readout's place while the chart is hidden
         // (same glyph the legend rows wear on a hidden indicator). syncParts drives it.
         this.eyeEl = doc.createElement('button');
@@ -695,6 +699,7 @@ export class Statusline {
             const s = doc.createElement('span');
             if (k) s.append(`${k} `);
             const b = doc.createElement('b');
+            b.dir = 'ltr';
             b.textContent = fmtPrice(v, dp);
             b.style.color = ink;
             s.appendChild(b);
