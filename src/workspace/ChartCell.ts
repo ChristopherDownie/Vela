@@ -41,7 +41,8 @@ import { isExchangeTimezone, normalizeTimezone, resolveTimezone, timezoneMenuRow
 import { applyPlotOverlayTokens } from '../ui';
 import type { LocalizationOptions, MessageLike } from '../core/i18n/types';
 import { msg } from '../core/i18n/message';
-import { textOf } from '../core/i18n/text';
+import { sourceText, textOf } from '../core/i18n/text';
+import { nativeIndicatorEntry } from '../core/native-indicators/NativeIndicator';
 import { STATUSLINE_PART_LABELS } from '../widget/statusline-model';
 
 /** The cell's settings rows (the chart settings dialog renders them in the chart's language). */
@@ -243,6 +244,13 @@ function instanceDeltas(handle: IndicatorHandle | null): { inputs?: Record<strin
     const inputs = inputDeltas(handle.inputs, handle.inputValues());
     const props = inputDeltas(handle.props, handle.propValues());
     return inputs || props ? { ...(inputs ? { inputs } : {}), ...(props ? { props } : {}) } : undefined;
+}
+
+/** A native type's name in English, the source text of its title message, which the
+ *  indicator picker's search matches besides the translated name. */
+function englishTitle(type: string): { englishName?: string } {
+    const entry = nativeIndicatorEntry(type);
+    return entry ? { englishName: sourceText(entry.title) } : {};
 }
 
 export class ChartCell {
@@ -1234,17 +1242,24 @@ export class ChartCell {
 
     /** The picker's library rows: supported natives first (see {@link supportedNatives}),
      *  then the manifest in the host's own order. */
-    libraryRows(): Array<{ name: string; language?: string; category?: string; native?: boolean; nativeType?: string; beta?: boolean }> {
+    libraryRows(): Array<{ name: string; englishName?: string; language?: string; category?: string; native?: boolean; nativeType?: string; beta?: boolean }> {
         return [
-            ...this.supportedNatives().map((n) => ({ name: n.title, category: textOf(this.inner?.i18n, TEXT.builtIn), native: true, nativeType: n.type, beta: n.beta })),
+            ...this.supportedNatives().map((n) => ({
+                name: n.title,
+                ...englishTitle(n.type),
+                category: textOf(this.inner?.i18n, TEXT.builtIn),
+                native: true,
+                nativeType: n.type,
+                beta: n.beta,
+            })),
             ...this.manifest.map((e) => ({ name: e.name, language: e.language, category: e.category })),
         ];
     }
 
     /** The picker's on-chart rows: native instances first, then live script instances. */
-    onChartRows(): Array<{ name: string; language?: string; native?: boolean; nativeType?: string }> {
+    onChartRows(): Array<{ name: string; englishName?: string; language?: string; native?: boolean; nativeType?: string }> {
         return [
-            ...this.nativeHandles().map((h) => ({ name: h.title, native: true, nativeType: h.nativeType })),
+            ...this.nativeHandles().map((h) => ({ name: h.title, ...englishTitle(h.nativeType!), native: true, nativeType: h.nativeType })),
             ...this.instances.map((it) => ({ name: it.entry.name, language: it.entry.language })),
         ];
     }

@@ -25,6 +25,10 @@ export type MessageLike = string | MessageDescriptor;
 export interface LocalePack {
     /** BCP 47 tag: `'de'`, `'pt-BR'`, `'zh-Hant'`. */
     readonly locale: string;
+    /** The direction the language reads in, set on right-to-left packs (`'rtl'`). It is
+     *  information for the host: the chrome follows the `direction` option, and
+     *  `direction: 'auto'` resolves to the same from the locale's script. */
+    readonly direction?: TextDirection;
     readonly messages: Readonly<Record<string, string>>;
 }
 

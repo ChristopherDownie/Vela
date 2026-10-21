@@ -16,6 +16,7 @@ import { buildToolbar } from '../src/core/drawings/toolbar';
 import { VelaWorkspace } from '../src/workspace/VelaWorkspace';
 import { layoutDefinition, layoutForGrid, layouts } from '../src/workspace/layouts';
 import english from '../src/locales/en.json';
+import { shownStrings } from './support/shown-text';
 
 beforeAll(() => {
     Element.prototype.animate ??= (() => ({ cancel() {}, finish() {}, addEventListener() {} })) as unknown as Element['animate'];
@@ -40,23 +41,6 @@ function unmarked(text: string): string {
         rest = rest.replace(/⟪[^⟪⟫]*⟫/g, '');
     }
     return rest;
-}
-
-/** Every string the page shows or announces: text, accessible names, tooltips, placeholders. */
-function shownStrings(root: Element): string[] {
-    const out: string[] = [];
-    const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-        if (n.parentElement?.closest('style, script, svg')) continue;
-        out.push(n.textContent ?? '');
-    }
-    for (const el of root.querySelectorAll('*')) {
-        for (const attr of ['aria-label', 'title', 'placeholder']) {
-            const v = el.getAttribute(attr);
-            if (v) out.push(v);
-        }
-    }
-    return out;
 }
 
 /** Names that stay as written in every language. */

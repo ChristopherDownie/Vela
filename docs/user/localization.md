@@ -2,8 +2,9 @@
 
 Vela renders in English by default. Set a locale and the chart formats its numbers and
 dates for that locale, reads its interface text from the locale packs you register, and can
-lay out its chrome right to left. With no localization options set, a chart looks and
-behaves exactly as it always has.
+lay out its chrome right to left. Vela publishes packs for the
+[languages listed below](#use-a-shipped-language), and you can add your own. With no
+localization options set, a chart looks and behaves exactly as it always has.
 
 Localization works the same on a bare chart (`new Vela(...)`), a
 [workspace](./workspace.md) and the deprecated widget: every one of them takes the options
@@ -80,6 +81,51 @@ ws.setLocale('ko'); // every cell, the shared panels, and cells a later layout c
 - **The page:** the chart's root element carries `lang` once you set a locale, and `dir` once
   you set a direction. Without them the attributes stay off and your page decides.
 
+## Use a shipped language
+
+Vela publishes a locale pack for each of these languages:
+
+| Language | Tag | Import |
+|---|---|---|
+| Spanish (Español) | `es` | `@luxalgo/vela/locales/es` |
+| Russian (Русский) | `ru` | `@luxalgo/vela/locales/ru` |
+
+Each pack translates every message Vela shows: the chrome, the built-in indicators, the
+drawing tools, the chart settings and the time zone names. Names stay as written in every
+language: Vela, LuxAlgo, PineTS, Pine Script®, tickers, and the indicators the trading
+literature knows by their English name. Numbers keep Western digits.
+
+Import a pack, register it, and switch to its locale:
+
+```ts
+import { registerLocale } from '@luxalgo/vela/plugin';
+import es from '@luxalgo/vela/locales/es';
+
+registerLocale(es);
+chart.setLocale('es');
+```
+
+Importing a pack never registers it. Each pack is its own entry point, so a page loads only
+the languages it imports. To load a language when the user picks it:
+
+```ts
+const { default: pack } = await import('@luxalgo/vela/locales/ru');
+registerLocale(pack);
+ws.setLocale(pack.locale);
+```
+
+A pack for a right-to-left language carries `direction: 'rtl'`. Pass `direction: 'auto'`
+with its locale and the chrome mirrors; see [Right to left](#right-to-left).
+
+With a pack active, the indicator picker finds an indicator by its translated name and by
+its English name, so a search for "Relative Strength" works in every language.
+
+The translations are machine-drafted, then checked in an independent review pass. If a
+word reads wrong in your language, corrections are welcome: open a pull request against the
+language's file in `src/locales/` (for example `src/locales/es.json`). To reword a message
+in your own app instead, use [`messages`](#override-any-string), or register your own pack
+for the same locale after Vela's: for the same message, the pack registered last wins.
+
 ## Add your own language
 
 A locale pack is one plain object: a locale tag and its messages, keyed by message id.
@@ -89,15 +135,15 @@ Register it before you switch to its locale:
 import { registerLocale } from '@luxalgo/vela/plugin';
 
 const off = registerLocale({
-    locale: 'de',
+    locale: 'nl',
     messages: {
-        'widget.shortcuts.title': 'Tastenkürzel',
-        'widget.shortcuts.mouse': 'Maus',
-        'ui.datePicker.nextMonth': 'Nächster Monat',
+        'widget.shortcuts.title': 'Sneltoetsen',
+        'widget.shortcuts.mouse': 'Muis',
+        'ui.datePicker.nextMonth': 'Volgende maand',
     },
 });
 
-chart.setLocale('de');
+chart.setLocale('nl');
 // Later, to remove the pack again:
 off();
 ```
@@ -115,14 +161,6 @@ English text:
 import en from '@luxalgo/vela/locales/en';
 
 console.log(en.messages); // { 'ui.datePicker.chooseMonth': 'Choose month', … }
-```
-
-Locale packs are published as separate entry points (`@luxalgo/vela/locales/<tag>`), so a
-page loads only the languages it imports. Load one when the user picks it:
-
-```ts
-const { default: pack } = await import('@luxalgo/vela/locales/en');
-registerLocale(pack);
 ```
 
 ### Message syntax
@@ -298,3 +336,12 @@ It collects every `msg()` call into `src/locales/en.json`, the English catalog t
 start from, and into `src/locales/catalog.d.ts`, the type that checks message ids. The tests
 fail when either file is out of date, or when a pack under `src/locales/` names an unknown
 message or changes a message's arguments.
+
+The shipped packs live beside it, one `<tag>.json` of messages and one `<tag>.ts` entry point
+per language; the build publishes each as `@luxalgo/vela/locales/<tag>`. A message a pack
+lacks reads in English, so a pack can trail a new message for a while. The workspace's own
+chrome cannot: the pack tests open a workspace in every shipped language and fail when an
+English word shows in its bars, panels and dialogs. When you add text there, add its
+translation to every pack. The pack tests also check that every message parses, takes the
+same values as English, has each plural form its language needs, keeps the product names,
+and writes Western digits.

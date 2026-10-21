@@ -8,7 +8,11 @@ import { injectStyles } from '../ui/styles';
 import { iconEl } from '../ui/icons';
 
 export interface IndicatorRow {
+    /** The name the picker shows, in the shell's language. */
     name: string;
+    /** The name in English when {@link name} is a translation. Search matches either, so a
+     *  reader of any language still finds an indicator by its English name. */
+    englishName?: string;
     language?: string;
     category?: string;
     /** Core-computed (native) indicator — accent styling + 'native' routing. */
@@ -203,11 +207,25 @@ export class IndicatorPicker {
 
     private refresh(): void {
         const doc = this.list.ownerDocument;
-        const q = this.search.value.trim().toLowerCase();
+        const raw = this.search.value.trim();
+        const locale = this.opts.i18n?.locale;
+        const lower = (s: string): string => {
+            try {
+                return s.toLocaleLowerCase(locale);
+            } catch {
+                return s.toLowerCase();
+            }
+        };
+        // A row matches by its shown name or by its English name. Text folds by the reader's
+        // casing rules and by the default ones, so a Latin name typed under Turkish rules
+        // (where `I` lowers to `ı`) still matches.
+        const q = lower(raw);
+        const qPlain = raw.toLowerCase();
         const library = this.opts.library();
         const instances = this.opts.onChart();
         this.list.replaceChildren();
-        const match = (r: IndicatorRow): boolean => !q || r.name.toLowerCase().includes(q);
+        const match = (r: IndicatorRow): boolean =>
+            !raw || lower(r.name).includes(q) || [r.name, r.englishName].some((n) => n !== undefined && n.toLowerCase().includes(qPlain));
 
         const rowEl = (r: IndicatorRow, opts: { library?: number; instance?: number }): HTMLElement => {
             const row = doc.createElement('div');
