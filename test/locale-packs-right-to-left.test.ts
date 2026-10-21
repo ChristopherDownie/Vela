@@ -26,11 +26,16 @@ const packFiles = (import.meta as unknown as { glob: PackGlob }).glob(['../src/l
     eager: true,
 });
 
+const languageNames = new Intl.DisplayNames(['en'], { type: 'language' });
+
 /** The shipped packs of languages that read right to left. */
 const rightToLeft = Object.values(packFiles)
     .filter((pack) => pack.direction === 'rtl')
     .map((pack) => ({ tag: pack.locale, pack }))
     .sort((a, b) => a.tag.localeCompare(b.tag));
+
+/** Opening a workspace is heavy work in jsdom. */
+const WORKSPACE_TIMEOUT = 30_000;
 
 const disposers: Array<() => void> = [];
 afterEach(() => {
@@ -70,7 +75,7 @@ function priceOf(text: string): number | null {
     return Number.isFinite(value) && value >= LOW && value <= HIGH ? value : null;
 }
 
-describe.each(rightToLeft)('a chart in $tag', ({ tag, pack }) => {
+describe.each(rightToLeft.map((row) => [languageNames.of(row.tag) ?? row.tag, row] as const))('a chart in %s', (_language, { tag, pack }) => {
     let restoreCanvas: () => void = () => {};
     beforeAll(() => {
         restoreCanvas = installCanvasStandIn();
@@ -91,7 +96,7 @@ describe.each(rightToLeft)('a chart in $tag', ({ tag, pack }) => {
         const topbar = host.querySelector<HTMLElement>('.vela-widget-indicators')!;
         expect(getComputedStyle(topbar).direction).toBe('rtl');
         expect(topbar.textContent).toBe(pack.messages['widget.topbar.indicators'] ?? 'Indicators');
-    });
+    }, WORKSPACE_TIMEOUT);
 
     it('keeps the plot, the price axis and every number it paints left to right', async () => {
         disposers.push(registerLocale(pack));
@@ -124,5 +129,8 @@ describe.each(rightToLeft)('a chart in $tag', ({ tag, pack }) => {
     });
 });
 
-// Until a right-to-left pack ships, the suite above has no language to run on.
-if (rightToLeft.length === 0) it.todo('a chart in Arabic or Hebrew mirrors its chrome and keeps its plot left to right');
+describe('the right-to-left languages', () => {
+    it('ship as Arabic and Hebrew packs that say they read right to left', () => {
+        expect(rightToLeft.map(({ tag }) => tag)).toEqual(['ar', 'he']);
+    });
+});
