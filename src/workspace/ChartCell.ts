@@ -39,7 +39,7 @@ import { prefixedSymbol, type CellState } from '../state/document';
 import { parseSymbol } from '../data/ProviderRegistry';
 import { isExchangeTimezone, normalizeTimezone, resolveTimezone, timezoneMenuRows } from '../core/timezones';
 import { applyPlotOverlayTokens } from '../ui';
-import type { LocalizationOptions, MessageLike } from '../core/i18n/types';
+import type { LocalizationOptions, MessageLike, Translator } from '../core/i18n/types';
 import { msg } from '../core/i18n/message';
 import { sourceText, textOf } from '../core/i18n/text';
 import { nativeIndicatorEntry } from '../core/native-indicators/NativeIndicator';
@@ -246,11 +246,15 @@ function instanceDeltas(handle: IndicatorHandle | null): { inputs?: Record<strin
     return inputs || props ? { ...(inputs ? { inputs } : {}), ...(props ? { props } : {}) } : undefined;
 }
 
-/** A native type's name in English, the source text of its title message, which the
- *  indicator picker's search matches besides the translated name. */
-function englishTitle(type: string): { englishName?: string } {
+/** The names the indicator picker's search matches for a native type besides its shown
+ *  title: the title in English, and the short title (`RSI`) in `i18n`'s language and in
+ *  English. */
+function nativeAliases(type: string, i18n: Translator | undefined): { aliases?: string[] } {
     const entry = nativeIndicatorEntry(type);
-    return entry ? { englishName: sourceText(entry.title) } : {};
+    if (!entry) return {};
+    const names = [sourceText(entry.title)];
+    if (entry.shortTitle !== undefined) names.push(textOf(i18n, entry.shortTitle), sourceText(entry.shortTitle));
+    return { aliases: [...new Set(names)] };
 }
 
 export class ChartCell {
@@ -1242,11 +1246,11 @@ export class ChartCell {
 
     /** The picker's library rows: supported natives first (see {@link supportedNatives}),
      *  then the manifest in the host's own order. */
-    libraryRows(): Array<{ name: string; englishName?: string; language?: string; category?: string; native?: boolean; nativeType?: string; beta?: boolean }> {
+    libraryRows(): Array<{ name: string; aliases?: string[]; language?: string; category?: string; native?: boolean; nativeType?: string; beta?: boolean }> {
         return [
             ...this.supportedNatives().map((n) => ({
                 name: n.title,
-                ...englishTitle(n.type),
+                ...nativeAliases(n.type, this.inner?.i18n),
                 category: textOf(this.inner?.i18n, TEXT.builtIn),
                 native: true,
                 nativeType: n.type,
@@ -1257,9 +1261,9 @@ export class ChartCell {
     }
 
     /** The picker's on-chart rows: native instances first, then live script instances. */
-    onChartRows(): Array<{ name: string; englishName?: string; language?: string; native?: boolean; nativeType?: string }> {
+    onChartRows(): Array<{ name: string; aliases?: string[]; language?: string; native?: boolean; nativeType?: string }> {
         return [
-            ...this.nativeHandles().map((h) => ({ name: h.title, ...englishTitle(h.nativeType!), native: true, nativeType: h.nativeType })),
+            ...this.nativeHandles().map((h) => ({ name: h.title, ...nativeAliases(h.nativeType!, this.inner?.i18n), native: true, nativeType: h.nativeType })),
             ...this.instances.map((it) => ({ name: it.entry.name, language: it.entry.language })),
         ];
     }

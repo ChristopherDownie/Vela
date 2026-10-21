@@ -143,8 +143,16 @@ registerLocale(ar);
 chart.setLocale({ locale: 'ar', direction: 'auto' });
 ```
 
-With a pack active, the indicator picker finds an indicator by its translated name and by
-its English name, so a search for "Relative Strength" works in every language.
+You can pass the browser's own language tag (`navigator.language`) as it is: a regional tag
+reads the closest pack you registered. `zh-CN` and `zh-SG` read Simplified Chinese, `zh-TW`,
+`zh-HK` and `zh-MO` Traditional Chinese, `es-MX` and `es-419` Spanish, `pt` and `pt-PT`
+Brazilian Portuguese, `ar-EG` Arabic, and the legacy tags `iw` and `in` read Hebrew and
+Indonesian. Numbers and dates still follow the tag itself, so `pt-PT` keeps Portugal's
+formats.
+
+With a pack active, the indicator picker finds an indicator by its translated name, by its
+English name and by its short name, so a search for "Relative Strength" or "RSI" works in
+every language.
 
 The translations are machine-drafted, then checked in an independent review pass. If a
 word reads wrong in your language, corrections are welcome: open a pull request against the
@@ -177,8 +185,11 @@ off();
 Registration is always a call: importing a pack never registers it. A pack only needs the
 messages it translates. A message missing from a pack falls back through the locale's
 parents to English: `pt-BR` reads `pt-BR`, then `pt`, then English; `zh-TW` reads `zh-TW`,
-then `zh-Hant`, then `zh`. Several packs can share a locale (Vela's, a plugin's, your own);
-for the same message, the pack registered last wins.
+then `zh-Hant`, then `zh`. After the bare language comes the region it usually means, when
+that region writes the same script: `pt-PT` reads `pt-PT`, `pt`, then `pt-BR`; `zh` reads
+`zh-Hans`, then `zh-CN`. Legacy tags read as their current ones (`iw` as `he`, `in` as `id`).
+Several packs can share a locale (Vela's, a plugin's, your own); for the same message, the
+pack registered last wins.
 
 Start a translation from the English reference pack, which lists every message id with its
 English text:

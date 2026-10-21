@@ -55,7 +55,8 @@ describe('messages', () => {
     it('a regional locale falls back to its language, then to English', () => {
         expect(fallbackChain('pt-BR')).toEqual(['pt-BR', 'pt-Latn', 'pt', 'en']);
         expect(fallbackChain('zh-TW')).toEqual(['zh-TW', 'zh-Hant', 'zh', 'en']);
-        expect(fallbackChain('en-IN')).toEqual(['en-IN', 'en-Latn', 'en']);
+        expect(fallbackChain('en-IN')).toEqual(['en-IN', 'en-Latn', 'en', 'en-US']);
+        expect(fallbackChain('pt-PT')).toEqual(['pt-PT', 'pt-Latn', 'pt', 'pt-BR', 'en']);
         register('pt', { 'test.title': 'Atalhos (pt)' });
         register('zh-Hant', { 'test.title': '鍵盤快捷鍵' });
         register('es', { 'test.title': 'Atajos de teclado' });

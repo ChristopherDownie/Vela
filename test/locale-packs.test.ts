@@ -12,7 +12,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
     disconnect() {}
 };
 
-import { registerLocale, type LocalePack } from '../src/plugin';
+import { createTranslator, msg, registerLocale, type LocalePack } from '../src/plugin';
 import { parseMessage } from '../src/core/i18n/icu';
 import { canonicalLocale, localeDirection } from '../src/core/i18n/locale';
 import { VelaWorkspace } from '../src/workspace/VelaWorkspace';
@@ -296,6 +296,40 @@ describe.each(byLanguage)('a workspace in %s', (_language, { pack }) => {
     }, WORKSPACE_TIMEOUT);
 });
 
+describe('regional language tags', () => {
+    it("a browser's regional language tag picks the closest shipped language", () => {
+        for (const { pack } of packs) disposers.push(registerLocale(pack));
+        const TITLE = msg('widget.indicatorPicker.title', ENGLISH['widget.indicatorPicker.title']!);
+        const shipped = Object.fromEntries(packs.map(({ tag, pack }) => [tag, pack.messages['widget.indicatorPicker.title'] ?? ENGLISH['widget.indicatorPicker.title']!]));
+        const picks = (browserTag: string): string => createTranslator({ locale: browserTag }).t(TITLE);
+        const expected: Record<string, string> = {
+            pt: 'pt-BR',
+            'pt-PT': 'pt-BR',
+            'pt-BR': 'pt-BR',
+            zh: 'zh-Hans',
+            'zh-CN': 'zh-Hans',
+            'zh-SG': 'zh-Hans',
+            'zh-TW': 'zh-Hant',
+            'zh-HK': 'zh-Hant',
+            'zh-MO': 'zh-Hant',
+            'es-419': 'es',
+            'es-MX': 'es',
+            'ar-EG': 'ar',
+            'ar-SA': 'ar',
+            iw: 'he', // the legacy tag for Hebrew
+            in: 'id', // the legacy tag for Indonesian
+        };
+        for (const [browserTag, tag] of Object.entries(expected)) {
+            expect(shipped[tag], tag).toBeDefined();
+            expect(picks(browserTag), browserTag).toBe(shipped[tag]);
+        }
+        // Simplified and Traditional Chinese write the word differently, so the check tells them apart.
+        expect(shipped['zh-Hans']).not.toBe(shipped['zh-Hant']);
+        for (const english of ['en', 'en-GB', 'en-IN', 'en-US']) expect(picks(english), english).toBe(ENGLISH['widget.indicatorPicker.title']);
+        expect(createTranslator({ locale: 'iw', direction: 'auto' }).direction).toBe('rtl');
+    });
+});
+
 describe('a language pack that trails English', () => {
     it(
         'still passes when it lacks a newer message, which reads in English, while English written outside any message is caught',
@@ -345,6 +379,12 @@ describe.each(byLanguage)('indicator search in %s', (_language, { pack }) => {
             expect(found(english.toLowerCase())).toContain(translated);
             expect(found(english.slice(0, -1))).toContain(translated);
             expect(found(`${english} zz`)).toEqual([]);
+            // Its short title finds it too, as the pack writes it and as English does ("RSI").
+            const shortId = id.replace(/\.title$/, '.shortTitle');
+            if (ENGLISH[shortId] !== undefined) {
+                expect(found(ENGLISH[shortId])).toContain(translated);
+                expect(found(pack.messages[shortId] ?? ENGLISH[shortId])).toContain(translated);
+            }
             // Once on the chart, it is found the same way among the chart's indicators.
             found(english);
             [...host.querySelectorAll<HTMLElement>('.vela-ip-row[data-library]')].find((row) => row.querySelector('.vela-ip-name')?.textContent === translated)!.click();

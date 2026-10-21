@@ -37,9 +37,11 @@ All notable changes to Vela, newest first.
   Hebrew, Hindi, Indonesian, Italian, Japanese, Korean, Malay, Polish, Brazilian Portuguese,
   Russian, Spanish, Thai, Turkish or Vietnamese, with product names, tickers and Western
   digits kept as they are. Arabic and Hebrew mirror the chrome with `direction: 'auto'`
-  while the plot keeps reading left to right. A page loads only the languages it imports. In
-  a translated interface the indicator picker still finds an indicator by its English name.
-  The translations are machine-drafted, then checked in an independent review pass;
+  while the plot keeps reading left to right. A page loads only the languages it imports,
+  and a browser's regional tag reads the closest one: `zh-TW` reads Traditional Chinese,
+  `pt-PT` Brazilian Portuguese, `es-MX` Spanish. The indicator picker finds an indicator by
+  its short name, such as RSI, and in a translated interface by its English name too. The
+  translations are machine-drafted, then checked in an independent review pass;
   corrections are welcome as pull requests.
 
 ### Changed
