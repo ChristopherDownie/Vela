@@ -29,12 +29,12 @@ export interface PaneControlsDeps {
 }
 
 const TEXT = {
-    moveUp: msg('chart.paneControls.moveUp', 'Move pane up'),
-    moveDown: msg('chart.paneControls.moveDown', 'Move pane down'),
-    expand: msg('chart.paneControls.expand', 'Expand pane'),
-    collapse: msg('chart.paneControls.collapse', 'Collapse pane'),
-    restore: msg('chart.paneControls.restore', 'Restore pane'),
-    maximize: msg('chart.paneControls.maximize', 'Maximize pane'),
+    moveUp: msg('chart.paneControls.moveUp', 'Move panel up'),
+    moveDown: msg('chart.paneControls.moveDown', 'Move panel down'),
+    expand: msg('chart.paneControls.expand', 'Expand panel'),
+    collapse: msg('chart.paneControls.collapse', 'Collapse panel'),
+    restore: msg('chart.paneControls.restore', 'Restore panel'),
+    maximize: msg('chart.paneControls.maximize', 'Maximize panel'),
 };
 
 const ICONS = {

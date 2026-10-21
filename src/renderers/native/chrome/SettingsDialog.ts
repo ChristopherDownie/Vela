@@ -60,8 +60,8 @@ const TEXT = {
     wick: msg('chart.settings.wick', 'Wick'),
     spacing: msg('chart.settings.spacing', 'Spacing'),
     bars: msg('chart.settings.bars', 'Bars'),
-    colorUp: msg('chart.settings.colorUp', 'Color Up'),
-    colorDown: msg('chart.settings.colorDown', 'Color Down'),
+    colorUp: msg('chart.settings.colorUp', 'Up color'),
+    colorDown: msg('chart.settings.colorDown', 'Down color'),
     line: msg('chart.settings.line', 'Line'),
     color: msg('chart.settings.color', 'Color'),
     width: msg('chart.settings.width', 'Width'),
@@ -95,7 +95,7 @@ const TEXT = {
     indexedTo100: msg('chart.settings.indexedTo100', 'Indexed to 100'),
     logarithmic: msg('chart.settings.logarithmic', 'Logarithmic'),
     invertScale: msg('chart.settings.invertScale', 'Invert scale'),
-    lastPriceLine: msg('chart.settings.lastPriceLine', 'Last Price Line'),
+    lastPriceLine: msg('chart.settings.lastPriceLine', 'Last price line'),
     lastPriceLabel: msg('chart.settings.lastPriceLabel', 'Last price label'),
     countdownToBarClose: msg('chart.settings.countdownToBarClose', 'Countdown to bar close'),
     axisLabels: msg('chart.settings.axisLabels', 'Axis labels'),
@@ -110,7 +110,7 @@ const TEXT = {
     background: msg('chart.settings.background', 'Background'),
     textColor: msg('chart.settings.textColor', 'Text color'),
     textSize: msg('chart.settings.textSize', 'Text size'),
-    paneSeparatorColor: msg('chart.settings.paneSeparatorColor', 'Pane separator color'),
+    paneSeparatorColor: msg('chart.settings.paneSeparatorColor', 'Panel separator color'),
     grid: msg('chart.settings.grid', 'Grid'),
     vertical: msg('chart.settings.vertical', 'Vertical'),
     horizontal: msg('chart.settings.horizontal', 'Horizontal'),
@@ -170,7 +170,7 @@ const TEXT_THEME = {
 
 /** Units after a number input. */
 const TEXT_UNITS = {
-    bars: msg('chart.settings.unitBars', 'bars'),
+    bars: msg('chart.settings.unitBars', '{count, plural, one {bar} other {bars}}'),
 };
 
 /** The instance strip's buttons; `{name}` is the instance's label. */
@@ -1444,12 +1444,20 @@ export class SettingsDialog {
         return el;
     }
 
-    /** `unit` (optional) trails the input as muted text — "%", "bars". */
+    /** `unit` (optional) trails the input as muted text ("bars"); it receives the input's
+     *  value as `count`, so its wording agrees with the number. */
     private numberRow(label: MessageLike, value: number, min: number, max: number, step: number, onChange: (v: number) => void, unit?: MessageLike): HTMLElement {
-        const controls = [buildFieldControl({ kind: 'number', value, min, max, step, fill: false, commit: 'live', steppers: true, onChange }).el];
-        if (unit) {
-            const u = document.createElement('span');
-            u.textContent = this.t(unit);
+        const u = unit ? document.createElement('span') : null;
+        const showUnit = (count: number): void => {
+            if (u && unit) u.textContent = this.t(unit, { count });
+        };
+        const commit = (v: number): void => {
+            showUnit(v);
+            onChange(v);
+        };
+        const controls = [buildFieldControl({ kind: 'number', value, min, max, step, fill: false, commit: 'live', steppers: true, onChange: commit }).el];
+        if (u) {
+            showUnit(value);
             u.style.cssText = 'color:var(--vela-fg-muted);';
             controls.push(u);
         }

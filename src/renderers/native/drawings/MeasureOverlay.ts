@@ -7,7 +7,7 @@ import type { Translator } from '../../../core/i18n/types';
 
 const TEXT = {
     priceChange: msg('drawing.ruler.priceChange', '{change} ({percent}%)'),
-    barsAndDuration: msg('drawing.ruler.barsAndDuration', '{count, plural, one {{bars} bar} other {{bars} bars}} · {duration}'),
+    barsAndDuration: msg('drawing.ruler.barsAndDuration', '{count, plural, one {{bars} bar} other {{bars} bars}}, {duration}'),
 };
 import { BEARISH, BULLISH } from '../../../core/palette';
 

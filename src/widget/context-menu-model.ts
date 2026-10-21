@@ -20,7 +20,7 @@ const TEXT = {
     priceLabel: msg('widget.contextMenu.priceLabel', 'Last price label'),
     countdown: msg('widget.contextMenu.countdown', 'Countdown to bar close'),
     levels: msg('widget.contextMenu.levels', 'Levels'),
-    priceLine: msg('widget.contextMenu.priceLine', 'Last Price Line'),
+    priceLine: msg('widget.contextMenu.priceLine', 'Last price line'),
     moreSettings: msg('widget.contextMenu.moreSettings', 'More settings…'),
     timezone: msg('widget.contextMenu.timezone', 'Time zone'),
     resetView: msg('widget.contextMenu.resetView', 'Reset chart view'),

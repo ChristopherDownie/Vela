@@ -260,7 +260,7 @@ const TEXT = {
     title: msg('widget.symbolPicker.title', 'Symbol Search'),
     search: msg('widget.symbolPicker.search', 'Search symbol…'),
     noMatch: msg('widget.symbolPicker.noMatch', 'No symbols match.'),
-    empty: msg('widget.symbolPicker.empty', 'No symbols indexed (provider still loading?).'),
+    empty: msg('widget.symbolPicker.empty', 'No symbols available yet.'),
     showContracts: msg('widget.symbolPicker.showContracts', 'Show contracts'),
 };
 

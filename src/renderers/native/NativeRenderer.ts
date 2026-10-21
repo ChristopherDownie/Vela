@@ -173,7 +173,7 @@ const TEXT = {
     scrollToLatest: msg('chart.scrollToLatest.label', 'Scroll to most recent bar'),
     scrollToLatestTitle: msg('chart.scrollToLatest.title', 'Scroll to most recent bar (Alt+Shift+→)'),
     mainChart: msg('chart.pane.mainChart', 'Main chart'),
-    pane: msg('chart.pane.numbered', 'Pane {n}'),
+    pane: msg('chart.pane.numbered', 'Panel {n}'),
     keyboardHelp: msg(
         'chart.a11y.keyboardHelp',
         'Interactive price chart. Use Left/Right arrows to move between bars, Shift+Arrow to pan, plus/minus to zoom, Home/End to jump, 0 to reset.',

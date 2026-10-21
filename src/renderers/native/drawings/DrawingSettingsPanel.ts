@@ -35,7 +35,7 @@ import { withKitTranslator } from '../../../ui/kit-text';
 const TEXT = {
     settings: msg('drawing.settings.settings', 'Settings'),
     cancel: msg('drawing.settings.cancel', 'Cancel'),
-    ok: msg('drawing.settings.ok', 'Ok'),
+    ok: msg('drawing.settings.ok', 'OK'),
     position: msg('drawing.settings.position', 'Position'),
     profile: msg('drawing.settings.profile', 'Profile'),
     lineColor: msg('drawing.settings.lineColor', 'Line color'),
@@ -71,7 +71,7 @@ const TEXT = {
     none: msg('drawing.settings.none', 'None'),
     label: msg('drawing.settings.label', 'Label'),
     addALabel: msg('drawing.settings.addALabel', 'Add a label'),
-    place: msg('drawing.settings.place', 'Place'),
+    place: msg('drawing.settings.place', 'Position'),
     positionAlongTheLine: msg('drawing.settings.positionAlongTheLine', 'Position along the line'),
     start: msg('drawing.settings.start', 'Start'),
     middle: msg('drawing.settings.middle', 'Middle'),

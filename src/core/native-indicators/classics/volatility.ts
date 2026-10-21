@@ -83,7 +83,7 @@ const chaikinVolatility: ClassicIndicatorSpec = {
         lengthInput(10, 'emaLength', msg('indicator.chaikinVolatility.emaLength', 'EMA Length'), 5000, msg('indicator.chaikinVolatility.emaLength.tooltip', 'Length of the exponential moving average applied to the bar high-low range.')),
         lengthInput(10, 'rocLength', msg('indicator.chaikinVolatility.rocLength', 'ROC Length'), 5000, msg('indicator.chaikinVolatility.rocLength.tooltip', 'Number of bars used for the rate of change of the smoothed high-low range.')),
         colorInput(NEUTRAL, msg('indicator.chaikinVolatility.color', 'CHV Color'), 'color', msg('indicator.chaikinVolatility.color.tooltip', 'Color of the Chaikin Volatility line.')),
-        colorInput(WARNING, msg('indicator.chaikinVolatility.expansionColor', 'Expansion'), 'expansionColor', msg('indicator.chaikinVolatility.expansionColor.tooltip', 'Line and fill color while the reading is above zero — the smoothed range is wider than it was ROC Length bars ago.')),
+        colorInput(WARNING, msg('indicator.chaikinVolatility.expansionColor', 'Expansion'), 'expansionColor', msg('indicator.chaikinVolatility.expansionColor.tooltip', 'Line and fill color while the reading is above zero, when the smoothed range is wider than it was at the start of the ROC Length lookback.')),
     ],
     compute: (bars, inputs) => {
         const range = ema(sub(highs(bars), lows(bars)), num(inputs, 'emaLength', 10));
@@ -110,8 +110,8 @@ const massIndex: ClassicIndicatorSpec = {
     inputs: [
         lengthInput(25, 'length', msg('indicator.massIndex.length', 'Sum Length'), 5000, msg('indicator.massIndex.length.tooltip', 'Number of bars over which the single/double EMA ratio is summed.')),
         lengthInput(9, 'emaLength', msg('indicator.massIndex.emaLength', 'EMA Length'), 5000, msg('indicator.massIndex.emaLength.tooltip', 'Length of the single EMA of the high-low range and of its double smoothing.')),
-        floatInput('setupLevel', msg('indicator.massIndex.setupLevel', 'Setup Level'), 27, 0, 1000, 0.1, msg('indicator.massIndex.setupLevel.tooltip', 'Reversal bulge set-up level; a rise above it arms the pattern.')),
-        floatInput('triggerLevel', msg('indicator.massIndex.triggerLevel', 'Trigger Level'), 26.5, 0, 1000, 0.1, msg('indicator.massIndex.triggerLevel.tooltip', 'Reversal bulge trigger level; a decline below it after a set-up completes the pattern.')),
+        floatInput('setupLevel', msg('indicator.massIndex.setupLevel', 'Setup Level'), 27, 0, 1000, 0.1, msg('indicator.massIndex.setupLevel.tooltip', 'Reversal bulge setup level; a rise above it arms the pattern.')),
+        floatInput('triggerLevel', msg('indicator.massIndex.triggerLevel', 'Trigger Level'), 26.5, 0, 1000, 0.1, msg('indicator.massIndex.triggerLevel.tooltip', 'Reversal bulge trigger level; a decline below it after a setup completes the pattern.')),
         colorInput(NEUTRAL, msg('indicator.massIndex.color', 'Mass Index'), 'color', msg('indicator.massIndex.color.tooltip', 'Line color while no reversal bulge is armed.')),
         colorInput(WARNING, msg('indicator.massIndex.armedColor', 'Armed'), 'armedColor', msg('indicator.massIndex.armedColor.tooltip', 'Line color from the rise above the setup level until the decline below the trigger level.')),
         colorInput(NEUTRAL, msg('indicator.massIndex.levelsColor', 'Levels'), 'levelsColor', msg('indicator.massIndex.levelsColor.tooltip', 'Reversal bulge levels color.')),
@@ -174,13 +174,13 @@ const ulcerIndex: ClassicIndicatorSpec = {
     inputs: [
         { ...lengthInput(14, 'length', msg('indicator.ulcerIndex.length', 'Length'), 500, msg('indicator.ulcerIndex.length.tooltip', "Lookback window. At each bar the percentage drawdown from the window's running maximum is squared; the squares are averaged and the root taken.")), min: 2 },
         sourceInput('Close', 'source', msg('indicator.ulcerIndex.source', 'Source'), msg('indicator.ulcerIndex.source.tooltip', 'Price series the Ulcer Index is computed on. Close is the standard choice.')),
-        floatInput('threshold', msg('indicator.ulcerIndex.threshold', 'Alert Threshold'), 5, 0, 1000, 0.25, msg('indicator.ulcerIndex.threshold.tooltip', "Reference level drawn as a dashed line. The index scales with the instrument's volatility and the window length, so set it relative to its own history.")),
+        floatInput('threshold', msg('indicator.ulcerIndex.threshold', 'Stress Threshold'), 5, 0, 1000, 0.25, msg('indicator.ulcerIndex.threshold.tooltip', "Reference level drawn as a dashed line. The index scales with the instrument's volatility and the window length, so set it relative to its own history.")),
         colorInput(NEUTRAL, msg('indicator.ulcerIndex.color', 'Ulcer Index'), 'color', msg('indicator.ulcerIndex.color.tooltip', 'Color of the index near zero; it blends toward the stress color as the reading approaches the threshold.')),
-        colorInput(BEARISH, msg('indicator.ulcerIndex.stressColor', 'Stress'), 'stressColor', msg('indicator.ulcerIndex.stressColor.tooltip', 'Color of the index at and beyond the alert threshold.')),
+        colorInput(BEARISH, msg('indicator.ulcerIndex.stressColor', 'Stress'), 'stressColor', msg('indicator.ulcerIndex.stressColor.tooltip', 'Color of the index at and beyond the stress threshold.')),
         boolInput('gradientFill', msg('indicator.ulcerIndex.gradientFill', 'Gradient Fill'), true, STYLE, msg('indicator.ulcerIndex.gradientFill.tooltip', 'Vertical gradient between zero and the Ulcer Index, fully transparent at zero.')),
         boolInput('showDrawdown', msg('indicator.ulcerIndex.showDrawdown', 'Drawdown %'), false, STYLE, msg('indicator.ulcerIndex.showDrawdown.tooltip', 'Plot the current percentage drawdown from the window high as columns below zero — the raw ingredient the index averages.')),
         colorInput(transp(BEARISH, 50), msg('indicator.ulcerIndex.drawdownColor', 'Drawdown Color'), 'drawdownColor', msg('indicator.ulcerIndex.drawdownColor.tooltip', 'Color of the drawdown columns.')),
-        colorInput(NEUTRAL, msg('indicator.ulcerIndex.thresholdColor', 'Threshold'), 'thresholdColor', msg('indicator.ulcerIndex.thresholdColor.tooltip', 'Color of the alert threshold line.')),
+        colorInput(NEUTRAL, msg('indicator.ulcerIndex.thresholdColor', 'Threshold'), 'thresholdColor', msg('indicator.ulcerIndex.thresholdColor.tooltip', 'Color of the stress threshold line.')),
     ],
     compute: (bars, inputs) => {
         const len = num(inputs, 'length', 14);
@@ -230,8 +230,8 @@ const ulcerIndex: ClassicIndicatorSpec = {
             plots,
             bands,
             levels: [
-                { key: 'zero', price: 0, color: transp(NEUTRAL, 50), lineStyle: 'dotted', title: msg('indicator.ulcerIndex.level.zero', 'Zero Level') },
-                { key: 'threshold', price: threshold, color: str(inputs, 'thresholdColor', NEUTRAL), lineStyle: 'dashed', title: msg('indicator.ulcerIndex.level.threshold', 'Alert Threshold') },
+                { key: 'zero', price: 0, color: transp(NEUTRAL, 50), lineStyle: 'dotted', title: msg('indicator.ulcerIndex.level.zero', 'Zero Line') },
+                { key: 'threshold', price: threshold, color: str(inputs, 'thresholdColor', NEUTRAL), lineStyle: 'dashed', title: msg('indicator.ulcerIndex.level.threshold', 'Stress Threshold') },
             ],
         };
     },

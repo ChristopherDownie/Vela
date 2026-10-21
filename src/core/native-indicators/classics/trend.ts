@@ -39,7 +39,7 @@ const adx: ClassicIndicatorSpec = {
         lengthInput(14, 'adxLength', msg('indicator.averageDirectionalIndex.adxLength', 'ADX Smoothing'), 5000, msg('indicator.averageDirectionalIndex.adxLength.tooltip', 'Wilder RMA smoothing length applied to DX to obtain the ADX line.')),
         floatInput('keyLevel', msg('indicator.averageDirectionalIndex.keyLevel', 'Key Level'), 25, 0, 100, 1, msg('indicator.averageDirectionalIndex.keyLevel.tooltip', 'Trend strength reference level; ADX above it is commonly read as a trending market.')),
         colorInput(BULLISH, msg('indicator.averageDirectionalIndex.plusDiColor', '+DI Color'), 'plusDiColor', msg('indicator.averageDirectionalIndex.plusDiColor.tooltip', 'Color of the plus directional indicator, and of the ADX line above the key level while +DI leads.')),
-        colorInput(BEARISH, msg('indicator.averageDirectionalIndex.minusDiColor', '-DI Color'), 'minusDiColor', msg('indicator.averageDirectionalIndex.minusDiColor.tooltip', 'Color of the minus directional indicator, and of the ADX line above the key level while −DI leads.')),
+        colorInput(BEARISH, msg('indicator.averageDirectionalIndex.minusDiColor', '−DI Color'), 'minusDiColor', msg('indicator.averageDirectionalIndex.minusDiColor.tooltip', 'Color of the minus directional indicator, and of the ADX line above the key level while −DI leads.')),
         colorInput(NEUTRAL, msg('indicator.averageDirectionalIndex.adxColor', 'ADX Color'), 'adxColor', msg('indicator.averageDirectionalIndex.adxColor.tooltip', 'Color of the ADX line while it sits below the key level — no trend strong enough to trade.')),
     ],
     compute: (bars, inputs) => {
@@ -71,7 +71,7 @@ const adx: ClassicIndicatorSpec = {
         return {
             plots: [
                 { key: 'plusDi', title: msg('indicator.averageDirectionalIndex.plot.plusDi', '+DI'), values: plusDi, color: transp(plusInk, 30) },
-                { key: 'minusDi', title: msg('indicator.averageDirectionalIndex.plot.minusDi', '-DI'), values: minusDi, color: transp(minusInk, 30) },
+                { key: 'minusDi', title: '-DI', displayTitle: msg('indicator.averageDirectionalIndex.plot.minusDi', '−DI'), values: minusDi, color: transp(minusInk, 30) },
                 { key: 'adx', title: msg('indicator.averageDirectionalIndex.plot.adx', 'ADX'), values: adxLine, color: neutralInk, width: 2, colors: adxColors },
             ],
             levels: [{ key: 'keyLevel', price: keyLevel, color: NEUTRAL, lineStyle: 'dashed', title: msg('indicator.averageDirectionalIndex.level.keyLevel', 'Key Level') }],
@@ -87,7 +87,7 @@ const vortex: ClassicIndicatorSpec = {
     inputs: [
         lengthInput(14, 'length', msg('indicator.vortexIndicator.length', 'Length'), 5000, msg('indicator.vortexIndicator.length.tooltip', 'Number of bars used to sum the vortex movements (VM+ and VM−) and the true range.')),
         colorInput(BULLISH, msg('indicator.vortexIndicator.plusColor', 'VI+'), 'plusColor', msg('indicator.vortexIndicator.plusColor.tooltip', 'Color of the positive vortex line (VI+).')),
-        colorInput(BEARISH, msg('indicator.vortexIndicator.minusColor', 'VI-'), 'minusColor', msg('indicator.vortexIndicator.minusColor.tooltip', 'Color of the negative vortex line (VI−).')),
+        colorInput(BEARISH, msg('indicator.vortexIndicator.minusColor', 'VI−'), 'minusColor', msg('indicator.vortexIndicator.minusColor.tooltip', 'Color of the negative vortex line (VI−).')),
         colorInput(NEUTRAL, msg('indicator.vortexIndicator.baselineColor', 'Baseline'), 'baselineColor', msg('indicator.vortexIndicator.baselineColor.tooltip', 'Color of the dotted baseline drawn at 1.')),
     ],
     compute: (bars, inputs) => {
@@ -103,7 +103,7 @@ const vortex: ClassicIndicatorSpec = {
         return {
             plots: [
                 { key: 'viPlus', title: msg('indicator.vortexIndicator.plot.viPlus', 'VI+'), values: zip(sum(vmPlus, len), trSum, (v, t) => (t === 0 ? Number.NaN : v / t)), color: str(inputs, 'plusColor', BULLISH) },
-                { key: 'viMinus', title: msg('indicator.vortexIndicator.plot.viMinus', 'VI-'), values: zip(sum(vmMinus, len), trSum, (v, t) => (t === 0 ? Number.NaN : v / t)), color: str(inputs, 'minusColor', BEARISH) },
+                { key: 'viMinus', title: 'VI-', displayTitle: msg('indicator.vortexIndicator.plot.viMinus', 'VI−'), values: zip(sum(vmMinus, len), trSum, (v, t) => (t === 0 ? Number.NaN : v / t)), color: str(inputs, 'minusColor', BEARISH) },
             ],
             levels: [{ key: 'baseline', price: 1, color: str(inputs, 'baselineColor', NEUTRAL), lineStyle: 'dotted', title: msg('indicator.vortexIndicator.level.baseline', 'Baseline') }],
         };

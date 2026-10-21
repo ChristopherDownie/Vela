@@ -239,7 +239,7 @@ const forceIndex: ClassicIndicatorSpec = {
     overlay: false,
     inputs: [
         lengthInput(13, 'length', msg('indicator.forceIndex.length', 'Length'), 5000, msg('indicator.forceIndex.length.tooltip', 'EMA length applied to the raw 1-bar force index, (close − close[1]) × volume. Elder used 13 for the intermediate trend and 2 for short-term timing.')),
-        colorInput(BULLISH, msg('indicator.forceIndex.color', 'Force Index'), 'color', msg('indicator.forceIndex.color.tooltip', 'Color of the line while above zero (buying pressure).')),
+        colorInput(BULLISH, msg('indicator.forceIndex.color', 'Bullish'), 'color', msg('indicator.forceIndex.color.tooltip', 'Color of the line while above zero (buying pressure).')),
         colorInput(BEARISH, msg('indicator.forceIndex.bearColor', 'Bearish'), 'bearColor', msg('indicator.forceIndex.bearColor.tooltip', 'Color of the line while below zero (selling pressure).')),
     ],
     compute: (bars, inputs) => {
@@ -362,10 +362,10 @@ const nvi: ClassicIndicatorSpec = {
     shortTitle: msg('indicator.negativeVolumeIndex.shortTitle', 'Negative Volume Index'),
     overlay: false,
     inputs: [
-        floatInput('base', msg('indicator.negativeVolumeIndex.base', 'Base Level'), 1000, 0.01, 1000000, 1, msg('indicator.negativeVolumeIndex.base.tooltip', 'Arbitrary seed of the cumulative line, conventionally 1000. The absolute level carries no information — the line is read by slope and by position against the signal EMA.')),
+        floatInput('base', msg('indicator.negativeVolumeIndex.base', 'Starting Value'), 1000, 0.01, 1000000, 1, msg('indicator.negativeVolumeIndex.base.tooltip', 'Arbitrary seed of the cumulative line, conventionally 1000. The absolute level carries no information — the line is read by slope and by position against the signal EMA.')),
         boolInput('showSignal', msg('indicator.negativeVolumeIndex.showSignal', 'Signal EMA'), true, SETTINGS, msg('indicator.negativeVolumeIndex.showSignal.tooltip', 'Displays the conventional signal overlay. Hiding it only removes the plotted average; the regime coloring and fill still use it.')),
-        lengthInput(255, 'signalLength', msg('indicator.negativeVolumeIndex.signalLength', 'Signal Length'), 5000, msg('indicator.negativeVolumeIndex.signalLength.tooltip', 'Length of the signal EMA. The convention is one trading year — 255 sessions on daily charts.')),
-        optionInput('colorMode', msg('indicator.negativeVolumeIndex.colorMode', 'Line Coloring'), NVI_POSITION, [NVI_POSITION, NVI_SINGLE], msg('indicator.negativeVolumeIndex.colorMode.tooltip', "'Position vs Average' colors the line by the classic regime read; 'Single Color' draws the whole line in the neutral color.")),
+        lengthInput(255, 'signalLength', msg('indicator.negativeVolumeIndex.signalLength', 'Signal Length'), 5000, msg('indicator.negativeVolumeIndex.signalLength.tooltip', 'Length of the signal EMA. The convention is 255 sessions on daily charts, about one trading year.')),
+        optionInput('colorMode', msg('indicator.negativeVolumeIndex.colorMode', 'Line Coloring'), NVI_POSITION, [NVI_POSITION, NVI_SINGLE], msg('indicator.negativeVolumeIndex.colorMode.tooltip', 'Position vs Average colors the line by the classic regime read; Single Color draws the whole line in the neutral color.')),
         ...regimeStyleInputs(msg('indicator.negativeVolumeIndex.signalColor', 'Signal EMA')),
     ],
     compute: (bars, inputs) => {
@@ -393,7 +393,7 @@ const pvi: ClassicIndicatorSpec = {
         sourceInput('Close', 'source', msg('indicator.positiveVolumeIndex.source', 'Source'), msg('indicator.positiveVolumeIndex.source.tooltip', 'Price series whose one-bar percentage change moves PVI on its active sessions.')),
         floatInput('base', msg('indicator.positiveVolumeIndex.base', 'Starting Value'), 1000, 1, 1000000, 1, msg('indicator.positiveVolumeIndex.base.tooltip', 'Seed of the cumulative line. The absolute level carries no information, so the reads are the slope and the position against the signal EMA.')),
         boolInput('showSignal', msg('indicator.positiveVolumeIndex.showSignal', 'Signal EMA'), true, SETTINGS, msg('indicator.positiveVolumeIndex.showSignal.tooltip', 'Plots the long EMA of PVI that anchors the classic regime read. Hiding it keeps the regime coloring and fill, which are always measured against it.')),
-        lengthInput(255, 'signalLength', msg('indicator.positiveVolumeIndex.signalLength', 'Signal Length'), 5000, msg('indicator.positiveVolumeIndex.signalLength.tooltip', 'Length of the signal EMA. The classic reference is a one-year average — 255 trading days on daily charts.')),
+        lengthInput(255, 'signalLength', msg('indicator.positiveVolumeIndex.signalLength', 'Signal Length'), 5000, msg('indicator.positiveVolumeIndex.signalLength.tooltip', 'Length of the signal EMA. The classic reference is 255 trading days on daily charts, about one year.')),
         ...regimeStyleInputs(msg('indicator.positiveVolumeIndex.signalColor', 'Signal Line')),
     ],
     compute: (bars, inputs) => {

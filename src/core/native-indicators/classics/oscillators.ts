@@ -331,7 +331,7 @@ const williamsR: ClassicIndicatorSpec = {
         lengthInput(14, 'length', msg('indicator.williamsPercentR.length', 'Length'), 5000, msg('indicator.williamsPercentR.length.tooltip', 'Lookback length of the highest high / lowest low range. 14 is the classic setting.')),
         sourceInput('Close', 'source', msg('indicator.williamsPercentR.source', 'Source'), msg('indicator.williamsPercentR.source.tooltip', 'Series located within the lookback range. Close is the classic choice.')),
         ...thresholdInputs(-20, -80, -100, 0),
-        colorInput(NEUTRAL, msg('indicator.williamsPercentR.color', '%R Line'), 'color', msg('indicator.williamsPercentR.color.tooltip', 'Color of the %R line between the thresholds. Toward either level it blends into that level’s color.')),
+        colorInput(NEUTRAL, msg('indicator.williamsPercentR.color', '%R Line'), 'color', msg('indicator.williamsPercentR.color.tooltip', 'Color of the %R line between the levels. Toward either level it blends into that level’s color.')),
         colorInput(BEARISH, msg('indicator.williamsPercentR.overboughtColor', 'Overbought'), 'overboughtColor', msg('indicator.williamsPercentR.overboughtColor.tooltip', 'Color of the line and zone shading at and above the overbought level.')),
         colorInput(BULLISH, msg('indicator.williamsPercentR.oversoldColor', 'Oversold'), 'oversoldColor', msg('indicator.williamsPercentR.oversoldColor.tooltip', 'Color of the line and zone shading at and below the oversold level.')),
     ],
@@ -592,7 +592,7 @@ const smiErgodic: ClassicIndicatorSpec = {
         const signal = ema(smi, num(inputs, 'signalLength', 5));
         const grow = str(inputs, 'growColor', BULLISH);
         const fall = str(inputs, 'fallColor', BEARISH);
-        const zero: ClassicLevel[] = [{ key: 'zero', price: 0, color: transp(NEUTRAL, 50), lineStyle: 'dashed', title: msg('indicator.smiErgodic.level.zero', 'Zero') }];
+        const zero: ClassicLevel[] = [{ key: 'zero', price: 0, color: transp(NEUTRAL, 50), lineStyle: 'dashed', title: msg('indicator.smiErgodic.level.zero', 'Zero Line') }];
         if (str(inputs, 'display', SMI_INDICATOR) === SMI_OSCILLATOR) {
             const osc = sub(smi, signal);
             const colors = osc.map((x, i) => {
@@ -743,8 +743,8 @@ const coppock: ClassicIndicatorSpec = {
     overlay: false,
     inputs: [
         lengthInput(10, 'wmaLength', msg('indicator.coppockCurve.wmaLength', 'WMA Length'), 5000, msg('indicator.coppockCurve.wmaLength.tooltip', 'Length of the weighted moving average applied to the sum of the two rates of change.')),
-        lengthInput(14, 'longRoc', msg('indicator.coppockCurve.longRoc', 'Long RoC Length'), 5000, msg('indicator.coppockCurve.longRoc.tooltip', 'Lookback of the long rate of change, in bars. The original definition uses 14 monthly closes.')),
-        lengthInput(11, 'shortRoc', msg('indicator.coppockCurve.shortRoc', 'Short RoC Length'), 5000, msg('indicator.coppockCurve.shortRoc.tooltip', 'Lookback of the short rate of change, in bars. The original definition uses 11 monthly closes.')),
+        lengthInput(14, 'longRoc', msg('indicator.coppockCurve.longRoc', 'Long ROC Length'), 5000, msg('indicator.coppockCurve.longRoc.tooltip', 'Lookback of the long rate of change, in bars. The original definition uses 14 monthly closes.')),
+        lengthInput(11, 'shortRoc', msg('indicator.coppockCurve.shortRoc', 'Short ROC Length'), 5000, msg('indicator.coppockCurve.shortRoc.tooltip', 'Lookback of the short rate of change, in bars. The original definition uses 11 monthly closes.')),
         sourceInput('Close', 'source', msg('indicator.coppockCurve.source', 'Source'), msg('indicator.coppockCurve.source.tooltip', 'Price series used for the rate of change calculations.')),
         colorInput(NEUTRAL, msg('indicator.coppockCurve.color', 'Coppock Curve'), 'color', msg('indicator.coppockCurve.color.tooltip', 'Color of the Coppock Curve line.')),
         colorInput(BULLISH, msg('indicator.coppockCurve.bullColor', 'Bullish'), 'bullColor', msg('indicator.coppockCurve.bullColor.tooltip', 'Line and fill color while the curve reads above zero.')),
@@ -898,7 +898,7 @@ const rvgi: ClassicIndicatorSpec = {
                 { key: 'rvgi', title: msg('indicator.relativeVigorIndex.plot.rvgi', 'RVGI'), values: line, color: str(inputs, 'color', BULLISH) },
                 { key: 'signal', title: msg('indicator.relativeVigorIndex.plot.signal', 'Signal'), values: swma(line), color: str(inputs, 'signalColor', BEARISH) },
             ],
-            levels: [{ key: 'zero', price: 0, color: transp(NEUTRAL, 50), lineStyle: 'dashed', title: msg('indicator.relativeVigorIndex.level.zero', 'Zero') }],
+            levels: [{ key: 'zero', price: 0, color: transp(NEUTRAL, 50), lineStyle: 'dashed', title: msg('indicator.relativeVigorIndex.level.zero', 'Zero Line') }],
         };
     },
 };
@@ -917,8 +917,8 @@ const relVolatility: ClassicIndicatorSpec = {
         optionInput('smoothType', msg('indicator.relativeVolatilityIndex.smoothType', 'Smoothing Type'), RVI_EMA, [RVI_EMA, RVI_RMA], msg('indicator.relativeVolatilityIndex.smoothType.tooltip', "Moving average applied to the volatility streams. EMA is Dorsey's classic calculation; Wilder (RMA) matches platforms that use Wilder smoothing.")),
         ...thresholdInputs(80, 20),
         colorInput(NEUTRAL, msg('indicator.relativeVolatilityIndex.color', 'RVI Line'), 'color', msg('indicator.relativeVolatilityIndex.color.tooltip', 'Color of the RVI line at the midline. Toward either threshold it blends into that threshold’s color.')),
-        colorInput(BULLISH, msg('indicator.relativeVolatilityIndex.overboughtColor', 'Up Volatility'), 'overboughtColor', msg('indicator.relativeVolatilityIndex.overboughtColor.tooltip', 'Color of the line and zone shading at and above the overbought level.')),
-        colorInput(BEARISH, msg('indicator.relativeVolatilityIndex.oversoldColor', 'Down Volatility'), 'oversoldColor', msg('indicator.relativeVolatilityIndex.oversoldColor.tooltip', 'Color of the line and zone shading at and below the oversold level.')),
+        colorInput(BULLISH, msg('indicator.relativeVolatilityIndex.overboughtColor', 'Overbought'), 'overboughtColor', msg('indicator.relativeVolatilityIndex.overboughtColor.tooltip', 'Color of the line and zone shading at and above the overbought level.')),
+        colorInput(BEARISH, msg('indicator.relativeVolatilityIndex.oversoldColor', 'Oversold'), 'oversoldColor', msg('indicator.relativeVolatilityIndex.oversoldColor.tooltip', 'Color of the line and zone shading at and below the oversold level.')),
     ],
     compute: (bars, inputs) => {
         const c = closes(bars);

@@ -473,4 +473,66 @@ describe('classic descriptor adapter', () => {
         expect(styled).toEqual(['bullColor', 'bearColor', 'bandsColor', 'fill']);
         expect(spec.inputs.slice(-styled.length).map((i) => i.key)).toEqual(styled);
     });
+
+    it('a plot whose name reads better on screen keeps the name hosts and saved styles know it by', () => {
+        const bars = Array.from({ length: 80 }, (_, i) => bar(100 + Math.sin(i / 4) * 5, i, 1000));
+        const named = (type: string): Array<[string, string | undefined]> =>
+            runOnce(classicSpecs.find((s) => s.type === type)!, bars).series!.map((s) => [s.title, en(s.displayTitle)]);
+        expect(named('average-directional-index')).toContainEqual(['-DI', '−DI']);
+        expect(named('vortex-indicator')).toContainEqual(['VI-', 'VI−']);
+        expect(named('chande-kroll-stop')).toEqual([
+            ['Stop Short', 'Short Stop'],
+            ['Stop Long', 'Long Stop'],
+        ]);
+        expect(named('gator-oscillator')).toEqual([
+            ['Upper Histogram (Jaw - Teeth)', 'Upper Histogram (Jaw − Teeth)'],
+            ['Lower Histogram (Teeth - Lips)', 'Lower Histogram (Teeth − Lips)'],
+        ]);
+        expect(named('52-week-high-low')).toEqual([
+            ['52 Week High', '52-Week High'],
+            ['52 Week Low', '52-Week Low'],
+        ]);
+        const vortex = runOnce(classicSpecs.find((s) => s.type === 'vortex-indicator')!, bars).series!;
+        expect(vortex.map((s) => s.id)).toEqual(['vortex-indicator:line:vi+#0', 'vortex-indicator:line:vi-#1']);
+    });
+
+    it('names every pivot type and the percentage mode in the chart language, while layouts keep the English value', () => {
+        const optionsShown = (type: string, key: string, i18n: ReturnType<typeof createTranslator>): Record<string, string> => {
+            const input = classicDescriptor(classicSpecs.find((s) => s.type === type)!)
+                .inputsSchema()
+                .find((i) => i.key === key)!;
+            return Object.fromEntries(input.options!.map((value) => [value, i18n.t(input.display?.options?.[value] ?? value)]));
+        };
+        const de = createTranslator({
+            locale: 'de',
+            messages: {
+                'indicator.option.fibonacci': 'Fibonacci-DE',
+                'indicator.option.camarilla': 'Camarilla-DE',
+                'indicator.option.woodie': 'Woodie-DE',
+                'indicator.option.rocPercent': 'ROC in %',
+            },
+        });
+        expect(optionsShown('pivot-points', 'kind', de)).toEqual({
+            Traditional: 'Traditional',
+            Fibonacci: 'Fibonacci-DE',
+            Camarilla: 'Camarilla-DE',
+            Woodie: 'Woodie-DE',
+        });
+        expect(optionsShown('rate-of-change', 'mode', de)).toEqual({ 'ROC %': 'ROC in %', Momentum: 'Momentum' });
+        expect(optionsShown('pivot-points', 'kind', english)).toEqual({
+            Traditional: 'Traditional',
+            Fibonacci: 'Fibonacci',
+            Camarilla: 'Camarilla',
+            Woodie: 'Woodie',
+        });
+    });
+
+    it("writes the Fibonacci pivot ratios with the locale's decimal separator", () => {
+        const kind = classicDescriptor(classicSpecs.find((s) => s.type === 'pivot-points')!)
+            .inputsSchema()
+            .find((i) => i.key === 'kind')!;
+        expect(kind.tooltip).toContain('Fibonacci projects 38.2/61.8/100% of the prior range');
+        expect(english.t(kind.display!.tooltip!)).toBe(kind.tooltip);
+        expect(createTranslator({ locale: 'de' }).t(kind.display!.tooltip!)).toContain('38,2/61,8/100%');
+    });
 });

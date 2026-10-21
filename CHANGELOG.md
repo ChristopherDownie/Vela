@@ -46,6 +46,15 @@ All notable changes to Vela, newest first.
 
 ### Changed
 
+- **Clearer English across the chart interface.** Menus and tooltips say "panel" where they
+  said "pane" ("Move to panel", "Panel 2"), dialogs confirm with "OK", and settings labels
+  use sentence case. Pivot Points name every pivot type in the chart's language and write
+  the Fibonacci ratios with the locale's decimal separator. The Relative Volatility Index
+  names its zone colors Overbought and Oversold, and the Ulcer Index calls its level a stress
+  threshold, since it raises no alert. The position tool shows the amount at risk as a plain
+  number, since the account balance has no currency. On phones, the drawing pill shows the
+  magnet's strength as bars instead of a letter. What hosts read back, such as plot names
+  and saved option values, stays as it was.
 - **The English-only formatting helpers are deprecated.** `fmtPrice` and `fmtChange` from
   `@luxalgo/vela/widget`, and the date picker's `MONTH_LABELS` and `WEEKDAY_LABELS` from
   `@luxalgo/vela/ui`, keep working and keep returning English. Format through a chart's
