@@ -12,7 +12,8 @@ export type FormatSurface =
     | 'drawing'
     | 'timeAxis'
     | 'tooltip'
-    | 'replay';
+    | 'replay'
+    | 'clock';
 
 /** The calendar unit a time-axis tick marks. */
 export type TimeTickUnit = 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second';
@@ -88,6 +89,15 @@ export interface TimeStampFormatOptions {
     timeZone?: string;
 }
 
+/** Options of {@link ResolvedFormatters.clock}. */
+export interface ClockFormatOptions {
+    surface?: FormatSurface;
+    /** The zone whose wall clock to read (an IANA id). Default `'UTC'`. */
+    timeZone?: string;
+    /** Show the seconds. Default true. */
+    seconds?: boolean;
+}
+
 /** Options of {@link ResolvedFormatters.duration}. */
 export interface DurationFormatOptions {
     surface?: FormatSurface;
@@ -114,6 +124,8 @@ export interface ResolvedFormatters {
     timeStamp(ms: number, options?: TimeStampFormatOptions): string;
     /** A length of time. */
     duration(ms: number, options?: DurationFormatOptions): string;
+    /** A time of day in a zone, like a clock (`14:05:09`). */
+    clock(ms: number, options?: ClockFormatOptions): string;
 }
 
 /** What a host price formatter receives. */
@@ -134,6 +146,8 @@ export type TimeTickFormatContext = FormatContext & { readonly unit: TimeTickUni
 export type TimeStampFormatContext = FormatContext & { readonly withTime: boolean };
 /** What a host duration formatter receives. */
 export type DurationFormatContext = FormatContext & { readonly style: 'countdown' | 'span' };
+/** What a host clock formatter receives. */
+export type ClockFormatContext = FormatContext & { readonly seconds: boolean };
 
 /**
  * Host replacements for chart formatting (`LocalizationOptions.formatters`). Supply any
@@ -148,6 +162,7 @@ export interface VelaFormatters {
     timeTick(ms: number, ctx: TimeTickFormatContext): string;
     timeStamp(ms: number, ctx: TimeStampFormatContext): string;
     duration(ms: number, ctx: DurationFormatContext): string;
+    clock(ms: number, ctx: ClockFormatContext): string;
 }
 
 /** The resolved settings the built-in formatters read. */

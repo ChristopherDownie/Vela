@@ -111,7 +111,7 @@ export class ShortcutsHelp {
             this.list.appendChild(row);
         };
         const byCategory = new Map<string, ReturnType<KeymapManager['bindings']>>();
-        for (const b of this.keymap.bindings()) {
+        for (const b of this.keymap.bindings(i18n)) {
             const bucket = byCategory.get(b.category) ?? [];
             bucket.push(b);
             byCategory.set(b.category, bucket);

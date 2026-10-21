@@ -13,6 +13,7 @@ import { Dialog } from '../../ui/components/dialog';
 import { DatePicker, normalizeDateInput } from '../../ui/components/date-picker';
 import { fieldRow, fieldSection, buildFieldControl, fieldGridColumns, FIELD_GAP_PX } from '../../ui/components/field';
 import { overlayScrollbarCss, FIELD_FOCUS_CSS, FIELD_FOCUS_RING } from '../../ui/styles';
+import { withKitTranslator } from '../../ui/kit-text';
 
 /** Emitted when the user edits an input in the in-chart settings dialog. */
 export interface InputsUIChange {
@@ -117,6 +118,11 @@ export class IndicatorInputsDialog {
     };
 
     open(row: IndicatorDialogRow): void {
+        // Kit controls built here (steppers, color pickers) speak the chart's language too.
+        withKitTranslator(this.i18n, () => this.build(row));
+    }
+
+    private build(row: IndicatorDialogRow): void {
         this.close();
         if (row.inputs.length === 0 && row.props.length === 0) return;
         this.row = row;

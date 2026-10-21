@@ -20,12 +20,14 @@ import { isEditableTarget, KeymapManager } from '../ui/keymap';
 import { Menu } from '../ui/components/menu';
 import type { Vela } from '../Vela';
 import { LocaleState, pickLocalization } from '../core/i18n/translator';
-import type { LocaleChangedEvent, LocalizationOptions, Translator } from '../core/i18n/types';
+import type { LocaleChangedEvent, LocalizationOptions, MessageArgs, MessageLike, Translator } from '../core/i18n/types';
+import { msg } from '../core/i18n/message';
+import { eventTimeText, sliceGraphemes, textOf } from '../core/i18n/text';
 import { Topbar, priceStyleLabel, priceStyleIcon } from '../widget/topbar';
 import { Bottombar, RANGE_PRESETS } from '../widget/bottombar';
 import { SecondClock } from '../core/util/wall-clock';
-import { ObjectTree } from '../widget/object-tree';
-import { DataWindow } from '../widget/data-window';
+import { ObjectTree, OBJECT_TREE_TITLE } from '../widget/object-tree';
+import { DataWindow, DATA_WINDOW_TITLE } from '../widget/data-window';
 import type { ScriptRun } from '../core/script-run';
 import { PanelDock } from '../widget/panel-dock';
 import { SymbolPicker } from '../widget/symbol-picker';
@@ -234,6 +236,42 @@ export function declaredOrder(cells: Record<string, unknown> | undefined): strin
     return names.filter((n) => !/^\d+$/.test(n));
 }
 
+const TEXT = {
+    syncSymbol: msg('workspace.sync.symbol', 'Symbol'),
+    syncInterval: msg('workspace.sync.interval', 'Interval'),
+    syncCrosshair: msg('workspace.sync.crosshair', 'Crosshair'),
+    syncStyle: msg('workspace.sync.style', 'Style'),
+    alert: msg('workspace.alerts.untitled', 'Alert'),
+    alertToast: msg('workspace.alerts.toast', '{source} — {title} — {message}'),
+    alertToastUntitled: msg('workspace.alerts.toastUntitled', '{source} — {message}'),
+    alertRow: msg('workspace.alerts.row', '{source} · {time} · {title}: {message}'),
+    alertDrawerTitle: msg('workspace.alerts.drawerTitle', '{source} · {title}'),
+    noAlerts: msg('workspace.alerts.none', 'No alerts yet'),
+    screenshot: msg('workspace.keys.screenshot', 'Download a screenshot of the layout'),
+    resetView: msg('workspace.keys.resetView', 'Reset view (all history)'),
+    toggleLog: msg('workspace.keys.toggleLog', 'Toggle logarithmic scale'),
+    togglePercent: msg('workspace.keys.togglePercent', 'Toggle percent scale'),
+    trendline: msg('workspace.keys.trendline', 'Arm the trend line tool'),
+    hlineCursor: msg('workspace.keys.hlineCursor', 'Horizontal line at the cursor price'),
+    vlineCursor: msg('workspace.keys.vlineCursor', 'Vertical line at the cursor time'),
+    undo: msg('workspace.keys.undo', 'Undo (active chart)'),
+    redo: msg('workspace.keys.redo', 'Redo (active chart)'),
+    zoomIn: msg('workspace.keys.zoomIn', 'Zoom in'),
+    zoomOut: msg('workspace.keys.zoomOut', 'Zoom out'),
+    panLeft: msg('workspace.keys.panLeft', 'Pan toward history'),
+    panRight: msg('workspace.keys.panRight', 'Pan toward now'),
+    openIndicators: msg('workspace.keys.openIndicators', 'Open the indicator picker'),
+    showShortcuts: msg('workspace.keys.showShortcuts', 'Show this shortcuts panel'),
+    categoryChart: msg('workspace.keys.category.chart', 'Chart'),
+    categoryDrawings: msg('workspace.keys.category.drawings', 'Drawings'),
+    categoryEdit: msg('workspace.keys.category.edit', 'Edit'),
+    categoryIndicators: msg('workspace.keys.category.indicators', 'Indicators'),
+    categoryHelp: msg('workspace.keys.category.help', 'Help'),
+};
+
+/** Characters an alert keeps in the bell's menu. */
+const ALERT_ROW_MAX = 80;
+
 /** The first `c<N>` name not already taken — identities for slots beyond the declared list. */
 export function nextAutoCellId(taken: ReadonlySet<string>): string {
     for (let i = 1; ; i += 1) {
@@ -257,13 +295,17 @@ export interface TypingState {
  * typing. Pure — unit-tested.
  */
 export function resolveTyping(key: string, open: TypingState): { target: 'symbol' | 'timeframe'; text: string } | null {
+    // One printable character (a code point: a letter outside the Basic Multilingual Plane
+    // counts once), not a control key name like `Enter`.
+    const printable = [...key].length === 1;
     if (open.dialogs > 0) {
-        if (key.length !== 1) return null; // a printable character, not a control key
+        if (!printable) return null;
         if (open.symbolSearch) return { target: 'symbol', text: key.toUpperCase() };
         if (open.timeframeEntry) return { target: 'timeframe', text: key.toUpperCase() };
         return null;
     }
-    if (/^[a-zA-Z0]$/.test(key)) return { target: 'symbol', text: key.toUpperCase() };
+    // A letter of any script opens symbol search: tickers are searched by name too.
+    if (printable && /^[\p{L}0]$/u.test(key)) return { target: 'symbol', text: key.toUpperCase() };
     if (/^[1-9]$/.test(key)) return { target: 'timeframe', text: key };
     return null;
 }
@@ -499,6 +541,7 @@ export class VelaWorkspace {
         // ── shared dialogs/pickers (they act on the ACTIVE cell at call time) ──
         this.symbolPicker = new SymbolPicker({
             host: this.root,
+            i18n: this.localeState,
             // Row icons come from each descriptor's OWNING provider (resolveSymbolIcon).
             iconFor: (d) => this.feed.symbolIconOf(d),
             onSelect: (ticker) => this.active.setSymbol(ticker),
@@ -520,6 +563,7 @@ export class VelaWorkspace {
             opts.indicatorPicker !== false && !this.indicatorsOverride && topbarHas(this.topbarComp, 'indicators')
                 ? new IndicatorPicker({
                       host: this.root,
+                      i18n: this.localeState,
                       library: () => this.active.libraryRows(),
                       onChart: () => this.active.onChartRows(),
                       onAdd: (i) => this.active.addFromLibrary(i),
@@ -535,6 +579,7 @@ export class VelaWorkspace {
         const picker = this.indicatorPicker;
         this.tfQuick = new TimeframeQuick({
             host: this.root,
+            i18n: this.localeState,
             onApply: (tf) => this.setActiveTimeframe(tf),
             onOpenChange: (open) => this.trackDialog(open),
         });
@@ -542,6 +587,7 @@ export class VelaWorkspace {
         // ── topbar (shared) — reflects the active cell; the layout dropdown reads the registry live ──
         this.topbar = new Topbar(this.root, {
             symbol: '',
+            i18n: this.localeState,
             // RAW option, not the resolved lists — the bar distinguishes a host-declared
             // side (list is law) from a default one (an override's `order` may flow).
             composition: opts.topbar,
@@ -565,18 +611,13 @@ export class VelaWorkspace {
                 // The picker composes dynamic layouts on its grid canvas; registered
                 // presets the canvas cannot express (bespoke plugin areas) list as rows.
                 shape: () => layoutShape(this.def),
-                presets: () => layouts().filter((l) => layoutShape(l) === null).map((l) => ({ id: l.id, label: l.label })),
+                presets: () => layouts().filter((l) => layoutShape(l) === null).map((l) => ({ id: l.id, label: this.t(l.label) })),
                 onSelectGrid: (rows, cols) => this.setLayout(layoutForGrid(rows, cols)),
                 onSelectPreset: (id) => this.setLayout(id),
                 // The SYNC switches reflect the simple all-cells form; flipping one
                 // OVERRIDES a host-set group record with plain on/off (groups stay an
                 // API-only shape).
-                syncs: () => [
-                    { id: 'symbol', label: 'Symbol', checked: this.syncOpts.symbol === true },
-                    { id: 'timeframe', label: 'Interval', checked: this.syncOpts.timeframe === true },
-                    { id: 'crosshair', label: 'Crosshair', checked: this.syncOpts.crosshair === true },
-                    { id: 'style', label: 'Style', checked: this.syncOpts.style === true },
-                ],
+                syncs: () => this.syncRows(),
                 onToggleSync: (id) => {
                     const kind = id as SyncKind;
                     this.sync.set(kind, this.syncOpts[kind] ? false : true);
@@ -612,11 +653,12 @@ export class VelaWorkspace {
             chrome: this.topbar,
             context: () => this.context(),
             changed: () => this.markStateDirty(),
+            i18n: this.localeState,
         });
-        this.objectTree = new ObjectTree(main, (sym) => this.feed.symbolIcon(sym));
-        this.dataWindow = new DataWindow(main);
-        this.dock.addBuiltIn({ id: 'dataWindow', title: 'Data window', icon: 'datawindow', order: 10, panel: this.dataWindow, onChart: (c) => this.dataWindow.onChart(c) });
-        this.dock.addBuiltIn({ id: 'objects', title: 'Object tree', icon: 'objects', order: 20, panel: this.objectTree, onChart: (c) => this.objectTree.onChart(c) });
+        this.objectTree = new ObjectTree(main, (sym) => this.feed.symbolIcon(sym), this.localeState);
+        this.dataWindow = new DataWindow(main, this.localeState);
+        this.dock.addBuiltIn({ id: 'dataWindow', title: DATA_WINDOW_TITLE, icon: 'datawindow', order: 10, panel: this.dataWindow, onChart: (c) => this.dataWindow.onChart(c) });
+        this.dock.addBuiltIn({ id: 'objects', title: OBJECT_TREE_TITLE, icon: 'objects', order: 20, panel: this.objectTree, onChart: (c) => this.objectTree.onChart(c) });
         this.dock.refresh();
         // The dock's own slice of the boot document (open panel, dragged widths, pinned
         // placements) — the sync-storage twin of what `applyState` does for a late document.
@@ -709,6 +751,7 @@ export class VelaWorkspace {
         this.bottombar =
             opts.bottombar !== false
                 ? new Bottombar(this.root, {
+                      i18n: this.localeState,
                       timezone: this.timezone,
                       clock: this.clock,
                       onRange: (preset) => {
@@ -729,6 +772,7 @@ export class VelaWorkspace {
         this.mobileBar =
             opts.bottombar !== false
                 ? new MobileBar(this.root, {
+                      i18n: this.localeState,
                       symbol: '',
                       timeframe: '60',
                       onSymbolClick: () => this.symbolPicker.open(),
@@ -773,7 +817,7 @@ export class VelaWorkspace {
         this.keymap.attach(this.root);
         this.registerDefaultKeys();
         // Shortcut hints beside the bound tools in the shared toolbar's flyouts.
-        this.drawToolbar?.setShortcuts(toolShortcutHints(this.keymap));
+        this.drawToolbar?.setShortcuts(toolShortcutHints(this.keymap, this.localeState));
         this.root.addEventListener('keydown', this.onRootKeydown);
         this.root.tabIndex = -1; // focusable host so bare keystrokes land here
 
@@ -943,8 +987,24 @@ export class VelaWorkspace {
         const patch = typeof next === 'string' ? { locale: next } : pickLocalization(next);
         this.localeState.update(patch);
         this.applyRootAttributes();
-        for (const cell of this.cellsById.values()) cell.chart.setLocale(patch);
+        for (const cell of this.cellsById.values()) {
+            cell.chart.setLocale(patch);
+            cell.relocalize();
+        }
+        this.relocalizeChrome();
         this.events.emit('locale:changed', { locale: this.localeState.locale, direction: this.localeState.direction });
+    }
+
+    /** Re-read the shared chrome in the current language. Dialogs, menus and drawers read
+     *  it on their next open; what stays on screen is relabeled here. */
+    private relocalizeChrome(): void {
+        this.topbar.relocalize();
+        this.bottombar?.relocalize();
+        this.mobileBar?.relocalize();
+        this.dock.relocalize();
+        this.drawToolbar?.relabel();
+        this.drawToolbar?.setShortcuts(toolShortcutHints(this.keymap, this.localeState));
+        this.drawingPill?.relocalize();
     }
 
     /** `lang` once the host set a locale, `dir` once it set a direction; otherwise the
@@ -1785,12 +1845,14 @@ export class VelaWorkspace {
         chart.on('alert', (alert) => {
             // Provenance the way a user reads it — symbol, timeframe, and the indicator
             // that fired — captured at fire time (the cell may switch markets later).
-            const source = [parseSymbol(cell.symbol).ticker || cell.symbol, timeframeLabel(cell.timeframe), alert.indicator]
+            // Written in the language of the moment it fired, like the toast it raises.
+            const source = [parseSymbol(cell.symbol).ticker || cell.symbol, timeframeLabel(cell.timeframe, this.localeState), alert.indicator]
                 .filter(Boolean)
                 .join(' ');
-            this.alerts.unshift({ cellId: cell.id, source, title: alert.title ?? 'Alert', message: alert.message, time: alert.time });
+            this.alerts.unshift({ cellId: cell.id, source, title: alert.title ?? this.t(TEXT.alert), message: alert.message, time: alert.time });
             if (this.alerts.length > this.alertCap) this.alerts.pop();
-            this.toastHost.show(`${source} — ${alert.title ? alert.title + ' — ' : ''}${alert.message}`, 'info', 4000);
+            const toast = alert.title ? this.t(TEXT.alertToast, { source, title: alert.title, message: alert.message }) : this.t(TEXT.alertToastUntitled, { source, message: alert.message });
+            this.toastHost.show(toast, 'info', 4000);
             this.topbar.setAlertCount(this.alerts.length);
         });
         // Favorites are a WORKSPACE preference: one shared toolbar, one star set — a star
@@ -2322,6 +2384,7 @@ export class VelaWorkspace {
                 this.bottombar?.setActiveRange(preset.id); // the desktop bar stays truthful across a mode flip
             },
             onOpenChange: (open) => this.trackDialog(open),
+            i18n: this.localeState,
         });
         this.tfDrawer.open();
     }
@@ -2346,18 +2409,19 @@ export class VelaWorkspace {
         const has = (id: string): boolean => topbarHas(this.topbarComp, id);
         this.moreDrawer ??= new MoreDrawer({
             host: this.root,
+            i18n: this.localeState,
             ...(has('undo-redo') ? { onUndo: () => this.active.history.undo(), onRedo: () => this.active.history.redo() } : {}),
             ...(has('screenshot')
                 ? { onScreenshot: this.screenshotOverride ? () => this.runOverride(this.screenshotOverride!) : () => this.downloadScreenshot() }
                 : {}),
             canUndo: () => this.active.history.canUndo,
             canRedo: () => this.active.history.canRedo,
-            priceStyles: () => priceStyleIds().map((id) => ({ id, label: priceStyleLabel(id), icon: priceStyleIcon(id) })),
+            priceStyles: () => priceStyleIds().map((id) => ({ id, label: priceStyleLabel(id, this.localeState), icon: priceStyleIcon(id) })),
             priceStyle: () => this.active.priceStyle,
             onPriceStyle: (id) => this.active.setPriceStyle(id),
             panels: () => (has('panels') ? [...this.dock.list()] : []),
             onTogglePanel: (id) => this.dock.toggle(id),
-            ...(has('alerts') ? { alerts: () => this.alerts.map((a) => ({ title: `${a.source} · ${a.title}`, message: a.message, time: a.time })) } : {}),
+            ...(has('alerts') ? { alerts: () => this.alerts.map((a) => ({ title: this.t(TEXT.alertDrawerTitle, { source: a.source, title: a.title }), message: a.message, time: a.time })) } : {}),
             // Actions placed on the bottom bar (left-aligned by default) have their stop
             // there — only the menu-placed ones land in the drawer, or they would appear
             // twice: left (primary) ones with the primary rows, right ones at the end.
@@ -2374,15 +2438,10 @@ export class VelaWorkspace {
                 presets: () =>
                     layouts()
                         .filter((l) => layoutShape(l) === null)
-                        .map((l) => ({ id: l.id, label: l.label, checked: l.id === this.def.id })),
+                        .map((l) => ({ id: l.id, label: this.t(l.label), checked: l.id === this.def.id })),
                 onSelectGrid: (rows, cols) => this.setLayout(layoutForGrid(rows, cols)),
                 onSelectPreset: (id) => this.setLayout(id),
-                syncs: () => [
-                    { id: 'symbol', label: 'Symbol', checked: this.syncOpts.symbol === true },
-                    { id: 'timeframe', label: 'Interval', checked: this.syncOpts.timeframe === true },
-                    { id: 'crosshair', label: 'Crosshair', checked: this.syncOpts.crosshair === true },
-                    { id: 'style', label: 'Style', checked: this.syncOpts.style === true },
-                ],
+                syncs: () => this.syncRows(),
                 onToggleSync: (id) => {
                     const kind = id as SyncKind;
                     this.sync.set(kind, this.syncOpts[kind] ? false : true);
@@ -2399,7 +2458,22 @@ export class VelaWorkspace {
         const builtin = new Set<string>(TOPBAR_BUILTIN_IDS);
         return widgetActions('topbar', this.context())
             .filter((a) => mobilePlacement(a) === 'menu' && (a.align === 'left') === (cluster === 'left') && !builtin.has(a.id))
-            .map((a) => ({ label: a.label, icon: a.icon, run: () => a.run(this.context()) }));
+            .map((a) => ({ label: this.t(a.label), icon: a.icon, run: () => a.run(this.context()) }));
+    }
+
+    /** Display text in the workspace's language. */
+    private t(text: MessageLike, values?: MessageArgs): string {
+        return textOf(this.localeState, text, values);
+    }
+
+    /** The layout SYNC switches (the topbar dropdown and the mobile drawer list the same). */
+    private syncRows(): Array<{ id: string; label: string; checked: boolean }> {
+        return [
+            { id: 'symbol', label: this.t(TEXT.syncSymbol), checked: this.syncOpts.symbol === true },
+            { id: 'timeframe', label: this.t(TEXT.syncInterval), checked: this.syncOpts.timeframe === true },
+            { id: 'crosshair', label: this.t(TEXT.syncCrosshair), checked: this.syncOpts.crosshair === true },
+            { id: 'style', label: this.t(TEXT.syncStyle), checked: this.syncOpts.style === true },
+        ];
     }
 
     private openTimezoneDrawer(): void {
@@ -2408,6 +2482,7 @@ export class VelaWorkspace {
             timezone: () => this.timezone,
             onTimezone: (zone) => this.setTimezone(zone),
             onOpenChange: (open) => this.trackDialog(open),
+            i18n: this.localeState,
         });
         this.timezoneDrawer.open();
     }
@@ -2429,9 +2504,9 @@ export class VelaWorkspace {
         const items = this.alerts.length
             ? this.alerts.map((a, i) => ({
                   id: String(i),
-                  label: `${a.source} · ${new Date(a.time).toLocaleTimeString()} · ${a.title}: ${a.message}`.slice(0, 80),
+                  label: sliceGraphemes(this.t(TEXT.alertRow, { source: a.source, time: eventTimeText(a.time, this.localeState), title: a.title, message: a.message }), ALERT_ROW_MAX),
               }))
-            : [{ id: 'none', label: 'No alerts yet', disabled: true }];
+            : [{ id: 'none', label: this.t(TEXT.noAlerts), disabled: true }];
         this.alertsMenu = new Menu({
             host: this.root,
             items,
@@ -2474,29 +2549,29 @@ export class VelaWorkspace {
             this.keymap.register({
                 id: 'chart.screenshot',
                 keys: 'mod+alt+s',
-                label: ov ? ov.label : 'Download a screenshot of the layout',
-                category: 'Chart',
+                label: ov ? ov.label : TEXT.screenshot,
+                category: TEXT.categoryChart,
                 run: ov ? () => this.runOverride(ov) : () => this.downloadScreenshot(),
             });
         }
-        this.keymap.register({ id: 'chart.reset-view', keys: 'alt+r', label: 'Reset view (all history)', category: 'Chart', run: () => this.active.chart.setVisibleRangePreset('ALL') });
-        this.keymap.register({ id: 'chart.toggle-log', keys: 'alt+l', label: 'Toggle logarithmic scale', category: 'Chart', run: () => this.active.chart.renderer.set('logScale', !this.active.chart.renderer.get('logScale')) });
+        this.keymap.register({ id: 'chart.reset-view', keys: 'alt+r', label: TEXT.resetView, category: TEXT.categoryChart, run: () => this.active.chart.setVisibleRangePreset('ALL') });
+        this.keymap.register({ id: 'chart.toggle-log', keys: 'alt+l', label: TEXT.toggleLog, category: TEXT.categoryChart, run: () => this.active.chart.renderer.set('logScale', !this.active.chart.renderer.get('logScale')) });
         this.keymap.register({
             id: 'chart.toggle-percent',
             keys: 'alt+p',
-            label: 'Toggle percent scale',
-            category: 'Chart',
+            label: TEXT.togglePercent,
+            category: TEXT.categoryChart,
             run: () => {
                 const mode = this.active.chart.renderer.get('scaleMode');
                 this.active.chart.renderer.set('scaleMode', mode === 'percent' ? 'price' : 'percent');
             },
         });
-        this.keymap.register({ id: 'drawings.trendline', keys: 'alt+t', label: 'Arm the trend line tool', category: 'Drawings', run: () => this.active.chart.drawings.setTool('trendline') });
+        this.keymap.register({ id: 'drawings.trendline', keys: 'alt+t', label: TEXT.trendline, category: TEXT.categoryDrawings, run: () => this.active.chart.drawings.setTool('trendline') });
         this.keymap.register({
             id: 'drawings.hline-cursor',
             keys: 'alt+h',
-            label: 'Horizontal line at the cursor price',
-            category: 'Drawings',
+            label: TEXT.hlineCursor,
+            category: TEXT.categoryDrawings,
             run: () => {
                 const c = this.active;
                 if (c.lastCrossTime != null && c.lastCrossPrice != null) c.chart.drawings.add('hline', { anchors: [{ time: c.lastCrossTime, price: c.lastCrossPrice }] });
@@ -2505,33 +2580,33 @@ export class VelaWorkspace {
         this.keymap.register({
             id: 'drawings.vline-cursor',
             keys: 'alt+v',
-            label: 'Vertical line at the cursor time',
-            category: 'Drawings',
+            label: TEXT.vlineCursor,
+            category: TEXT.categoryDrawings,
             run: () => {
                 const c = this.active;
                 if (c.lastCrossTime != null && c.lastCrossPrice != null) c.chart.drawings.add('vline', { anchors: [{ time: c.lastCrossTime, price: c.lastCrossPrice }] });
             },
         });
-        this.keymap.register({ id: 'history.undo', keys: ['mod+z'], label: 'Undo (active chart)', category: 'Edit', run: () => this.active.history.undo() });
-        this.keymap.register({ id: 'history.redo', keys: ['mod+y', 'mod+shift+z'], label: 'Redo (active chart)', category: 'Edit', run: () => this.active.history.redo() });
-        this.keymap.register({ id: 'view.zoom-in', keys: 'mod+arrowup', label: 'Zoom in', category: 'Chart', run: () => this.glider.zoom(ZOOM_IN) });
-        this.keymap.register({ id: 'view.zoom-out', keys: 'mod+arrowdown', label: 'Zoom out', category: 'Chart', run: () => this.glider.zoom(ZOOM_OUT) });
+        this.keymap.register({ id: 'history.undo', keys: ['mod+z'], label: TEXT.undo, category: TEXT.categoryEdit, run: () => this.active.history.undo() });
+        this.keymap.register({ id: 'history.redo', keys: ['mod+y', 'mod+shift+z'], label: TEXT.redo, category: TEXT.categoryEdit, run: () => this.active.history.redo() });
+        this.keymap.register({ id: 'view.zoom-in', keys: 'mod+arrowup', label: TEXT.zoomIn, category: TEXT.categoryChart, run: () => this.glider.zoom(ZOOM_IN) });
+        this.keymap.register({ id: 'view.zoom-out', keys: 'mod+arrowdown', label: TEXT.zoomOut, category: TEXT.categoryChart, run: () => this.glider.zoom(ZOOM_OUT) });
         // Pan keys mirror a drag exactly (same clamp, same easing) — see Vela.panBy.
-        this.keymap.register({ id: 'view.pan-left', keys: 'mod+arrowleft', label: 'Pan toward history', category: 'Chart', run: () => this.active.chart.panBy(-PAN_FAST) });
-        this.keymap.register({ id: 'view.pan-right', keys: 'mod+arrowright', label: 'Pan toward now', category: 'Chart', run: () => this.active.chart.panBy(PAN_FAST) });
+        this.keymap.register({ id: 'view.pan-left', keys: 'mod+arrowleft', label: TEXT.panLeft, category: TEXT.categoryChart, run: () => this.active.chart.panBy(-PAN_FAST) });
+        this.keymap.register({ id: 'view.pan-right', keys: 'mod+arrowright', label: TEXT.panRight, category: TEXT.categoryChart, run: () => this.active.chart.panBy(PAN_FAST) });
         // `/` belongs to the indicators SLOT: it opens the built-in picker, or routes
         // to the slot's override — a replaced Indicators surface keeps its shortcut.
         const indOv = this.indicatorsOverride;
         if (indOv && topbarHas(this.topbarComp, 'indicators')) {
-            this.keymap.register({ id: 'indicators.open', keys: '/', label: indOv.label, category: 'Indicators', run: () => this.runOverride(indOv) });
+            this.keymap.register({ id: 'indicators.open', keys: '/', label: indOv.label, category: TEXT.categoryIndicators, run: () => this.runOverride(indOv) });
         } else if (this.indicatorPicker) {
-            this.keymap.register({ id: 'indicators.open', keys: '/', label: 'Open the indicator picker', category: 'Indicators', run: () => this.indicatorPicker?.open() });
+            this.keymap.register({ id: 'indicators.open', keys: '/', label: TEXT.openIndicators, category: TEXT.categoryIndicators, run: () => this.indicatorPicker?.open() });
         }
         this.keymap.register({
             id: 'help.shortcuts',
             keys: '?',
-            label: 'Show this shortcuts panel',
-            category: 'Help',
+            label: TEXT.showShortcuts,
+            category: TEXT.categoryHelp,
             run: () => {
                 this.shortcutsHelp ??= new ShortcutsHelp(this.keymap, this.root, (open) => this.trackDialog(open), () => this.localeState);
                 this.shortcutsHelp.open();
@@ -2543,6 +2618,8 @@ export class VelaWorkspace {
     private routeTyping(ev: KeyboardEvent): void {
         if (this.destroyed) return;
         if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+        // An input method composing a character (kana, hangul, pinyin) owns its keystrokes.
+        if (ev.isComposing || ev.key === 'Process') return;
         if (isEditableTarget(ev)) return; // never hijack a keystroke someone is TYPING
         const hit = resolveTyping(ev.key, { dialogs: this.openDialogs, symbolSearch: this.symbolPicker.isOpen, timeframeEntry: this.tfQuick.isOpen });
         if (!hit) return;

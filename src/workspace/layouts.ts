@@ -10,13 +10,15 @@
 //
 // `registerLayout` is the SDK seam: plugins/hosts add denser grids or bespoke
 // arrangements, and every workspace layout picker reads the registry live.
+import { msg, withValues } from '../core/i18n/message';
+import type { MessageLike } from '../core/i18n/types';
 
 /** One registered workspace layout. */
 export interface LayoutDefinition {
     /** Stable id (`'4'`, `'2h'`, a plugin's `'6-tall'`, …) — re-registering replaces. */
     id: string;
-    /** Human-readable label for layout pickers. */
-    label: string;
+    /** Human-readable label for layout pickers. A message follows the shell's language. */
+    label: MessageLike;
     /** Column track weights (`fr` units), left to right. */
     cols: number[];
     /** Row track weights, top to bottom. */
@@ -70,11 +72,11 @@ function slots(n: number): Array<{ id: string }> {
 
 /** Register the built-in presets (idempotent — called by the workspace entry point). */
 export function registerBuiltinLayouts(): void {
-    registerLayout({ id: '1', label: 'Single', cols: [1], rows: [1], cells: slots(1) });
-    registerLayout({ id: '2h', label: '2 side by side', cols: [1, 1], rows: [1], cells: slots(2) });
-    registerLayout({ id: '2v', label: '2 stacked', cols: [1], rows: [1, 1], cells: slots(2) });
-    registerLayout({ id: '4', label: '4 grid', cols: [1, 1], rows: [1, 1], cells: slots(4) });
-    registerLayout({ id: '8', label: '8 grid', cols: [1, 1, 1, 1], rows: [1, 1], cells: slots(8) });
+    registerLayout({ id: '1', label: msg('workspace.layout.single', 'Single'), cols: [1], rows: [1], cells: slots(1) });
+    registerLayout({ id: '2h', label: msg('workspace.layout.sideBySide', '2 side by side'), cols: [1, 1], rows: [1], cells: slots(2) });
+    registerLayout({ id: '2v', label: msg('workspace.layout.stacked', '2 stacked'), cols: [1], rows: [1, 1], cells: slots(2) });
+    registerLayout({ id: '4', label: msg('workspace.layout.grid4', '4 grid'), cols: [1, 1], rows: [1, 1], cells: slots(4) });
+    registerLayout({ id: '8', label: msg('workspace.layout.grid8', '8 grid'), cols: [1, 1, 1, 1], rows: [1, 1], cells: slots(8) });
 }
 
 // ── dynamic layouts (the topbar's grid picker) ──────────────────────────────
@@ -97,6 +99,8 @@ const GRID_BUILTIN_IDS: Record<string, string> = {
     '2x4': '8',
 };
 
+const GRID_LABEL = msg('workspace.layout.grid', '{cols} × {rows} grid');
+
 const clampTrack = (n: number): number => Math.max(1, Math.min(GRID_PICKER_MAX, Math.round(n)));
 
 /**
@@ -113,7 +117,7 @@ export function layoutForGrid(rows: number, cols: number): LayoutDefinition {
     return {
         id: `g${r}x${c}`,
         // Width-first label — matches the picker's caption ("3 × 2" = 3 wide, 2 tall).
-        label: `${c} × ${r} grid`,
+        label: withValues(GRID_LABEL, { cols: c, rows: r }),
         cols: Array.from({ length: c }, () => 1),
         rows: Array.from({ length: r }, () => 1),
         cells: slots(r * c),

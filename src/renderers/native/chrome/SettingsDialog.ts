@@ -45,6 +45,7 @@ import {
 } from './settings-visibility';
 import type { MarkGroup } from '../../../core/marks/types';
 import { markGroupRows } from '../../../core/marks/visibility';
+import { withKitTranslator } from '../../../ui/kit-text';
 
 const TEXT = {
     sections: msg('chart.settings.sections', 'Sections'),
@@ -467,7 +468,8 @@ export class SettingsDialog {
 
         this.root = ui.positioner;
         this.ui = ui;
-        const panes = this.buildContent(ui, config, section, mobile);
+        // Kit controls built here (steppers, color pickers) speak the chart's language too.
+        const panes = withKitTranslator(this.i18n?.(), () => this.buildContent(ui, config, section, mobile));
         ui.show();
         this.layoutPanes(panes);
     }
@@ -487,7 +489,7 @@ export class SettingsDialog {
         this.hintTips = [];
         this.config = config;
         ui.body.replaceChildren();
-        this.layoutPanes(this.buildContent(ui, config, this.activeSection ?? undefined, this.mobileLayout));
+        this.layoutPanes(withKitTranslator(this.i18n?.(), () => this.buildContent(ui, config, this.activeSection ?? undefined, this.mobileLayout)));
     }
 
     /** Structured chart-type panes (instance strip / group TOC) own their layout and

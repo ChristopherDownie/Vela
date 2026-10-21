@@ -30,6 +30,7 @@ import { TextArea } from '../../../ui/components/text-area';
 import { formatTimeStamp, valueDecimals } from '../chrome/ticks';
 import { buildPositionSection, buildProfileSection } from './DrawingSettingsSections';
 import type { PopupAnchor, SettingsActions, SettingsPatch } from './DrawingSettingsPopup';
+import { withKitTranslator } from '../../../ui/kit-text';
 
 const TEXT = {
     settings: msg('drawing.settings.settings', 'Settings'),
@@ -296,10 +297,15 @@ export class DrawingSettingsPanel {
 
     /** Re-read the drawing after a change made outside the panel (a drag, an undo). */
     sync(): void {
-        this.refresh?.();
+        withKitTranslator(this.env.i18n?.(), () => this.refresh?.());
     }
 
     open(drawing: Drawing, actions: SettingsActions, anchor: PopupAnchor | null): void {
+        // Kit controls built here (steppers, color pickers) speak the chart's language too.
+        withKitTranslator(this.env.i18n?.(), () => this.build(drawing, actions, anchor));
+    }
+
+    private build(drawing: Drawing, actions: SettingsActions, anchor: PopupAnchor | null): void {
         this.close();
         ensureStyles();
         const first = actions.resolve() ?? drawing;

@@ -895,6 +895,7 @@ export class DrawingSettingsPopup {
      *  value shows an empty field with a dash until a number is typed for all. */
     private widthInput(tip: string, value: number | Mixed, min: number, max: number, step: number, onChange: (v: number) => void): HTMLElement {
         const ni = new NumberInput({
+            i18n: this.i18n?.() ?? null,
             value: value === MIXED ? min : value,
             min,
             max,
@@ -1103,7 +1104,7 @@ export class DrawingSettingsPopup {
                     }
                     el.appendChild(row);
                 }
-                el.appendChild(buildColorPicker(color, t, onChange));
+                el.appendChild(buildColorPicker(color, t, onChange, { i18n: this.i18n?.() ?? null }));
             },
         });
         this.colorOwner = anchor;

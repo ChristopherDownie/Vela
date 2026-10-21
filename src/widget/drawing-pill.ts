@@ -9,6 +9,20 @@ import type { Vela } from '../Vela';
 import { iconEl, iconMarkup } from '../ui/icons';
 import { injectStyles } from '../ui/styles';
 import { getDrawingType, type SnapMode } from '../core/drawings';
+import { msg } from '../core/i18n/message';
+import { textOf } from '../core/i18n/text';
+import type { MessageLike } from '../core/i18n/types';
+
+const TEXT = {
+    magnet: msg('widget.drawingPill.magnet', 'Magnet snap'),
+    stay: msg('widget.drawingPill.stay', 'Stay in drawing mode'),
+    eraser: msg('widget.drawingPill.eraser', 'Eraser'),
+    exit: msg('widget.drawingPill.exit', 'Exit drawing mode'),
+    /** The magnet badge: the first letter of "Weak". */
+    weakBadge: msg('widget.drawingPill.weakBadge', 'W'),
+    /** The magnet badge: the first letter of "Strong". */
+    strongBadge: msg('widget.drawingPill.strongBadge', 'S'),
+};
 
 const STYLE_ID = 'vela-widget-drawing-pill';
 const CSS = `
@@ -86,16 +100,17 @@ export class DrawingPill {
         this.toolGlyph = doc.createElement('span');
         this.toolGlyph.className = 'vela-drawpill-tool';
 
-        const btn = (icon: string, label: string, onClick: () => void): HTMLButtonElement => {
+        const btn = (icon: string, label: MessageLike, onClick: () => void): HTMLButtonElement => {
             const b = doc.createElement('button');
             b.className = 'vela-drawpill-btn';
-            b.setAttribute('aria-label', label);
+            b.setAttribute('aria-label', this.t(label));
+            this.labels.push({ el: b, label });
             b.appendChild(iconEl(icon, doc));
             b.addEventListener('click', onClick);
             return b;
         };
 
-        this.magnetBtn = btn('magnet', 'Magnet snap', () => {
+        this.magnetBtn = btn('magnet', TEXT.magnet, () => {
             const order: SnapMode[] = ['off', 'weak', 'strong'];
             const cur = this.chart?.drawings.getSnapMode() ?? 'off';
             this.chart?.drawings.setSnapMode(order[(order.indexOf(cur) + 1) % order.length]!);
@@ -103,13 +118,13 @@ export class DrawingPill {
         this.magnetBadge = doc.createElement('span');
         this.magnetBadge.className = 'vela-drawpill-badge';
         this.magnetBtn.appendChild(this.magnetBadge);
-        this.stayBtn = btn(iconMarkup('pen-lock') ? 'pen-lock' : 'pen', 'Stay in drawing mode', () => {
+        this.stayBtn = btn(iconMarkup('pen-lock') ? 'pen-lock' : 'pen', TEXT.stay, () => {
             this.chart?.drawings.setStayMode(!this.chart.drawings.getStayMode());
         });
-        this.eraserBtn = btn('eraser', 'Eraser', () => {
+        this.eraserBtn = btn('eraser', TEXT.eraser, () => {
             this.chart?.drawings.setMode(this.chart.drawings.getMode() === 'eraser' ? null : 'eraser');
         });
-        const close = btn('close', 'Exit drawing mode', () => {
+        const close = btn('close', TEXT.exit, () => {
             this.chart?.drawings.setTool(null);
             this.chart?.drawings.setMode(null);
         });
@@ -119,6 +134,12 @@ export class DrawingPill {
     }
 
     private chartSubs: Array<() => void> = [];
+    /** Each button's accessible name, re-read in the chart's language on every sync. */
+    private readonly labels: Array<{ el: HTMLElement; label: MessageLike }> = [];
+
+    private t(text: MessageLike): string {
+        return textOf(this.chart?.i18n, text);
+    }
 
     /** Rebind to another chart (a rebuild, or the workspace's active cell changing) —
      *  the previous chart's subscriptions are dropped so only one chart drives the pill. */
@@ -134,7 +155,13 @@ export class DrawingPill {
         this.sync();
     }
 
+    /** Re-read the labels in the chart's language. */
+    relocalize(): void {
+        this.sync();
+    }
+
     private sync(): void {
+        for (const { el, label } of this.labels) el.setAttribute('aria-label', this.t(label));
         const drawings = this.chart?.drawings;
         if (!drawings || !drawings.supported) {
             this.el.hidden = true;
@@ -147,7 +174,7 @@ export class DrawingPill {
         this.toolGlyph.innerHTML = tool !== null ? (getDrawingType(tool)?.icon ?? '') : (iconMarkup('eraser') ?? '');
         const snap = drawings.getSnapMode();
         this.magnetBtn.dataset.on = snap !== 'off' ? '1' : '';
-        this.magnetBadge.textContent = snap === 'weak' ? 'W' : snap === 'strong' ? 'S' : '';
+        this.magnetBadge.textContent = snap === 'weak' ? this.t(TEXT.weakBadge) : snap === 'strong' ? this.t(TEXT.strongBadge) : '';
         this.stayBtn.dataset.on = drawings.getStayMode() ? '1' : '';
         this.eraserBtn.dataset.on = eraser ? '1' : '';
     }

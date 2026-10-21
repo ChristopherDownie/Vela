@@ -4,7 +4,7 @@
 // locale would otherwise count Buddhist years) and the clock is 24-hour unless the host
 // asks otherwise.
 import { localizeAscii, localizeDigits, numberFormat, stripBidiMarks } from './numbers';
-import type { DurationFormatOptions, FormatSettings, TimeStampFormatOptions, TimeTickFormatOptions, TimeTickUnit } from './types';
+import type { ClockFormatOptions, DurationFormatOptions, FormatSettings, TimeStampFormatOptions, TimeTickFormatOptions, TimeTickUnit } from './types';
 
 export const EN_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
 export const EN_WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
@@ -155,4 +155,38 @@ export function formatDuration(ms: number, options: DurationFormatOptions | unde
     const parts = spanParts(ms);
     if (settings.english) return localizeDigits(parts.map(([n, u]) => `${n}${EN_UNIT[u]}`).join(' '), settings);
     return parts.map(([n, unit]) => stripBidiMarks(numberFormat(settings, { style: 'unit', unit, unitDisplay: 'narrow' }).format(n))).join(' ');
+}
+
+const clockFormats = new Map<string, Intl.DateTimeFormat | null>();
+
+/** A wall clock in a zone. English on the default clock keeps Vela's `14:05:09`; other
+ *  locales and clocks read `Intl`, with the settings' digits and hour cycle. */
+export function formatClock(ms: number, options: ClockFormatOptions | undefined, settings: FormatSettings): string {
+    const timeZone = options?.timeZone ?? 'UTC';
+    const seconds = options?.seconds ?? true;
+    const english = settings.english && settings.hourCycle === 'h23';
+    const key = `${english ? 'en-GB' : settings.locale}|${settings.numberingSystem}|${settings.hourCycle}|${timeZone}|${seconds}`;
+    let dtf = clockFormats.get(key);
+    if (dtf === undefined) {
+        const base: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', ...(seconds ? { second: '2-digit' } : {}), timeZone };
+        try {
+            dtf = english
+                ? new Intl.DateTimeFormat('en-GB', { ...base, hour12: false })
+                : new Intl.DateTimeFormat(settings.locale, {
+                      ...base,
+                      calendar: 'gregory',
+                      numberingSystem: settings.numberingSystem,
+                      ...(settings.hourCycle === 'locale' ? {} : { hourCycle: settings.hourCycle }),
+                  });
+        } catch {
+            dtf = null;
+        }
+        clockFormats.set(key, dtf);
+    }
+    if (!dtf) return '';
+    try {
+        return stripBidiMarks(dtf.format(new Date(ms)));
+    } catch {
+        return '';
+    }
 }

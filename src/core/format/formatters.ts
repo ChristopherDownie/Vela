@@ -1,7 +1,7 @@
 // Assembles a chart's resolved formatters: the built-in formatting for its settings, with
 // any host replacement layered on top. The built-in path allocates nothing beyond its
 // result; a host formatter gets a context object with `fallback()` to the built-in.
-import { formatDuration, formatTimeStamp, formatTimeTick } from './dates';
+import { formatClock, formatDuration, formatTimeStamp, formatTimeTick } from './dates';
 import { formatCompact, formatPercent, formatPrice } from './numbers';
 import type { FormatContext, FormatSettings, FormatSurface, ResolvedFormatters, VelaFormatters } from './types';
 
@@ -14,6 +14,7 @@ export function builtinFormatters(settings: FormatSettings): ResolvedFormatters 
         timeTick: (ms, options) => formatTimeTick(ms, options, settings),
         timeStamp: (ms, options) => formatTimeStamp(ms, options, settings),
         duration: (ms, options) => formatDuration(ms, options, settings),
+        clock: (ms, options) => formatClock(ms, options, settings),
     };
 }
 
@@ -80,6 +81,11 @@ export function resolveFormatters(settings: FormatSettings, overrides?: Partial<
             const fallback = (): string => base.duration(ms, options);
             if (typeof o.duration !== 'function') return fallback();
             return viaHost(o.duration, ms, { ...ctx(options?.surface, 'lastPrice', undefined, fallback), style: options?.style ?? 'countdown' }, fallback);
+        },
+        clock(ms, options) {
+            const fallback = (): string => base.clock(ms, options);
+            if (typeof o.clock !== 'function') return fallback();
+            return viaHost(o.clock, ms, { ...ctx(options?.surface, 'clock', options?.timeZone, fallback), seconds: options?.seconds ?? true }, fallback);
         },
     };
 }

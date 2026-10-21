@@ -48,6 +48,8 @@ export type {
     TimeTickFormatOptions,
     TimeStampFormatOptions,
     DurationFormatOptions,
+    ClockFormatOptions,
+    ClockFormatContext,
     PriceFormatContext,
     PercentFormatContext,
     CompactFormatContext,
