@@ -60,13 +60,23 @@ ws.setLocale('ko'); // every cell, the shared panels, and cells a later layout c
 
 - **Numbers and dates on the chart:** the price axis (price, percent, indexed and volume
   scales), the last-price label and its countdown, the time axis, the crosshair's price and
-  time chips, and the values in the legend and the data window.
+  time chips, the values in the legend, the data window and the status line, the numbers
+  drawing tools show, and the bottom bar's clock. Alert times in the alerts list follow the
+  chart's clock once you set a locale.
 - **Calendars:** the date picker in an indicator's settings names months and weekdays in the
   locale, starts its weeks on the locale's first day, and orders month and year the way the
   locale writes them.
-- **Interface text** that Vela declares as messages, such as the keyboard shortcuts panel
-  and the date picker's controls. Most chrome text still reads in English; more of it
-  moves into messages over time, and each message reads in English until a pack translates it.
+- **Interface text:** the words Vela's own chrome shows or announces are messages: the top
+  and bottom bars, menus, dialogs and panels, the built-in indicators with their inputs and plots, the
+  drawing tools with their settings and on-chart labels, the chart settings, time zone
+  names, key names in the shortcuts panel, toasts, and the names screen readers announce.
+  Each message reads in English until a pack translates it, and switching the locale
+  relabels what is on screen at once.
+- **What stays as it is:** symbols, venues and the descriptions your data provider gives
+  them, script names, the names you type (a drawing's text, a group you named), and the
+  values a chart saves. A saved layout keeps an
+  indicator's option as `'Week'` whatever language its menu showed it in, so a layout opens
+  the same in every language.
 - **The page:** the chart's root element carries `lang` once you set a locale, and `dir` once
   you set a direction. Without them the attributes stay off and your page decides.
 
@@ -201,9 +211,9 @@ Other conventions hold in every locale:
 
 ## Replace a formatter
 
-Supply any of `price`, `percent`, `compact`, `timeTick`, `timeStamp` and `duration` in
-`formatters`. Each receives the value and a context: the `locale`, the display `timeZone`,
-the `surface` the value appears on (`'priceAxis'`, `'crosshair'`, `'lastPrice'`,
+Supply any of `price`, `percent`, `compact`, `timeTick`, `timeStamp`, `duration` and
+`clock` in `formatters`. Each receives the value and a context: the `locale`, the display
+`timeZone`, the `surface` the value appears on (`'priceAxis'`, `'crosshair'`, `'lastPrice'`,
 `'timeAxis'`, `'legend'`, `'dataWindow'`, …), the formatter's own fields, and `fallback()`,
 which returns Vela's built-in formatting:
 
@@ -241,10 +251,40 @@ The translator is the same object for the chart's lifetime and reads the new set
 as `ctx.i18n`, and renderer layers as `args.i18n`. For UI you build outside a chart,
 `createTranslator(options)` makes a standalone one.
 
+### Label what you contribute
+
+The labels you hand Vela accept a message as well as a plain string, and Vela shows them in
+the shell's language: a contributed action's `label`, a side panel's `title`, a legend
+action's `tooltip`, a legend callout's text, a registered layout's `label`, a key binding's
+`label` and `category`, an indicator input's `display` (its title, tooltip, group and the
+names of its options), and a drawing type's name. What you read back, such as
+`keymap.bindings(i18n)` or `chart.availableNativeIndicators()`, is already resolved text.
+
+```ts
+import { msg, registerWidgetAction } from '@luxalgo/vela/plugin';
+
+registerWidgetAction({
+    id: 'acme.export',
+    target: 'topbar',
+    label: msg('acme.export.label', 'Export trades'),
+    run: (ctx) => exportTrades(ctx),
+});
+```
+
+## Keyboards and scripts
+
+Shortcuts name Latin keys, and they keep working on keyboard layouts of other scripts:
+Ctrl+Z undoes on a Russian layout, where that key types `я`. A Latin layout keeps its own
+letters wherever they sit. Typing a letter of any script on the chart opens symbol search,
+and while an input method composes a character (Japanese, Chinese, Korean), its keystrokes
+stay with it. Text drawn on the chart wraps between words in scripts written without spaces,
+such as Thai, Chinese and Japanese.
+
 ## For contributors
 
 Declare new interface text with `msg('area.component.key', 'English text')` and resolve it
-through a translator. Then run:
+through a translator. Never decide anything from display text: keep identities (ids, option
+values, saved names) in English and show them through a message. Then run:
 
 ```sh
 npm run i18n:extract
