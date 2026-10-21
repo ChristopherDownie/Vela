@@ -16,8 +16,13 @@ import type {
     DataWindowOHLC,
     DataWindowGroup,
     DataWindowReadout,
+    RendererRootAttributes,
 } from '../../core/ports/IChartRenderer';
 import type { VelaTheme } from '../../core/options';
+import type { Translator } from '../../core/i18n/types';
+import { englishTranslator } from '../../core/i18n/translator';
+import { ENGLISH_FORMAT } from '../../core/format/formatters';
+import type { FormatSurface } from '../../core/format/types';
 import type { OHLCV } from '../../core/model/ohlcv';
 import type { Millis } from '../../core/model/time';
 import type { VolumeLayerData, VpvrLayerData } from '../../core/model/volume-layers';
@@ -170,6 +175,10 @@ export class NativeRenderer implements IChartRenderer {
     private surfaceBackground = DARK_THEME.background;
     private surfaceTextColor = DARK_THEME.textColor;
     private wrapper!: HTMLDivElement; // outer root: holds the left toolbar gutter + the plot sub-container
+    /** The chart's translator (null until the chart hands it over: English then). */
+    private i18n: Translator | null = null;
+    /** `lang`/`dir` the wrapper carries — null leaves the attribute to the host page. */
+    private rootAttrs: RendererRootAttributes = { lang: null, dir: null };
     private plot!: HTMLDivElement; // the plot area (canvases + DOM overlays), inset to the right of the toolbar gutter
     private toolbarGutter = 0; // px reserved on the left for the docked drawings toolbar (0 when hidden)
     private mountContainer: HTMLElement | null = null; // the host-owned element mount() renders into
@@ -1500,6 +1509,7 @@ export class NativeRenderer implements IChartRenderer {
         this.positionAttribution();
         this.wrapper.appendChild(this.attributionEl);
         container.appendChild(this.wrapper);
+        this.applyRootAttributes();
         this.applyBackground();
 
         this.backdropRenderer.mount(this.backdropCanvas);
@@ -1649,6 +1659,7 @@ export class NativeRenderer implements IChartRenderer {
         this.setKeyboardEnabled(this.keyboardEnabled); // accessible by default; wires focus + ARIA
 
         this.inputsUI = new InputsUI(this.plot, theme, (paneId) => this.paneBoundsFor(paneId));
+        this.inputsUI.setI18n(this.i18n);
         this.inputsUI.setLayoutMode(this.layoutMode);
         this.inputsUI.setTitlesVisible(this.indicatorTitlesOn); // a remount keeps the toggle state
         this.inputsUI.setValuesVisible(this.indicatorValuesOn);
@@ -1837,6 +1848,28 @@ export class NativeRenderer implements IChartRenderer {
         this.userDrawings?.setTheme(this.chromeTheme());
         this.refreshAttributionColor();
         this.scheduler.invalidate(InvalidateLevel.Full);
+    }
+
+    /** Adopt the chart's localization (see `IChartRenderer.setLocalization`): the formatters
+     *  feed the axes, chips and readouts, the root carries `lang`/`dir`, and everything
+     *  repaints. */
+    setLocalization(i18n: Translator, root: RendererRootAttributes): void {
+        this.i18n = i18n;
+        this.rootAttrs = { lang: root.lang, dir: root.dir };
+        this.scene.format = i18n.format;
+        this.inputsUI?.setI18n(i18n);
+        this.applyRootAttributes();
+        if (this.scheduler) this.scheduler.invalidate(InvalidateLevel.Full);
+    }
+
+    private applyRootAttributes(): void {
+        const el = this.wrapper as HTMLDivElement | undefined;
+        if (!el) return;
+        const { lang, dir } = this.rootAttrs;
+        if (lang) el.setAttribute('lang', lang);
+        else el.removeAttribute('lang');
+        if (dir) el.setAttribute('dir', dir);
+        else el.removeAttribute('dir');
     }
 
     resize(): void {
@@ -3216,8 +3249,13 @@ export class NativeRenderer implements IChartRenderer {
         return this.scene.orderedPanes().find((p) => p.kind === 'price') ?? null;
     }
 
-    private dataWindowFmt(v: number, pane: PaneNode | null): string {
-        return pane ? formatPriceLabel(pane.scale, pane.bounds.height, v, this.scene.priceMintick) : String(v);
+    private dataWindowFmt(v: number, pane: PaneNode | null, surface: FormatSurface = 'dataWindow'): string {
+        return pane ? formatPriceLabel(pane.scale, pane.bounds.height, v, this.scene.priceMintick, this.scene.format, surface) : String(v);
+    }
+
+    /** A volume in the data window and the volume legend row (`1.20M`: two decimals kept). */
+    private formatVolume(v: number, surface: FormatSurface): string {
+        return (this.scene.format ?? ENGLISH_FORMAT).compact(v, { decimals: 2, trimZeros: false, surface });
     }
 
     private dataWindowOHLC(bar: OHLCV | undefined, pricePane: PaneNode | null): DataWindowOHLC | null {
@@ -3227,7 +3265,7 @@ export class NativeRenderer implements IChartRenderer {
             h: this.dataWindowFmt(bar.high, pricePane),
             l: this.dataWindowFmt(bar.low, pricePane),
             c: this.dataWindowFmt(bar.close, pricePane),
-            vol: bar.volume != null ? formatVolume(bar.volume) : undefined,
+            vol: bar.volume != null ? this.formatVolume(bar.volume, 'dataWindow') : undefined,
             up: bar.close >= bar.open,
         };
     }
@@ -3248,7 +3286,7 @@ export class NativeRenderer implements IChartRenderer {
     private readoutRowsFor(model: IndicatorModel, idx: number, pricePane: PaneNode | null, surface: SeriesSurface): DataWindowRow[] {
         // The volume native draws through its bespoke layer and mounts a series-less model, so
         // its readout comes straight from the bar's volume instead of iterating `model.series`.
-        if (model.native?.type === 'volume') return this.volumeReadoutRows(model, idx);
+        if (model.native?.type === 'volume') return this.volumeReadoutRows(model, idx, surface === 'legend' ? 'legend' : 'dataWindow');
         const pane = (model.paneId ? this.scene.panes.get(model.paneId) : null) ?? pricePane;
         const off = this.scene.offsetOf(model.id);
         const rows: DataWindowRow[] = [];
@@ -3266,7 +3304,7 @@ export class NativeRenderer implements IChartRenderer {
                 continue; // markers carry no scalar readout
             }
             if (value == null || !Number.isFinite(value)) continue;
-            rows.push({ label: s.title || model.title, value: this.dataWindowFmt(value, pane), color });
+            rows.push({ label: s.title || model.title, value: this.dataWindowFmt(value, pane, surface === 'legend' ? 'legend' : 'dataWindow'), color });
         }
         return rows;
     }
@@ -3274,14 +3312,14 @@ export class NativeRenderer implements IChartRenderer {
     /** The volume indicator's readout: the bar's volume, tinted with the layer's own direction
      *  colors. Hiding volume keeps its model in the scene (only the layer is suppressed — see
      *  `setIndicatorVisible`), so the hidden flag is checked here rather than by model absence. */
-    private volumeReadoutRows(model: IndicatorModel, idx: number): DataWindowRow[] {
+    private volumeReadoutRows(model: IndicatorModel, idx: number, surface: FormatSurface): DataWindowRow[] {
         if (this.volumeHidden) return [];
         const bar = this.bars[idx];
         const vol = bar?.volume;
         if (bar == null || vol == null || !Number.isFinite(vol)) return [];
         const cfg = this.scene.volumeLayer;
         const color = bar.close >= bar.open ? (cfg?.upColor ?? this.theme.upColor) : (cfg?.downColor ?? this.theme.downColor);
-        return [{ label: model.title, value: formatVolume(vol), color }];
+        return [{ label: model.title, value: this.formatVolume(vol, surface), color }];
     }
 
     /** Refresh the plot values beside every legend title — the same bar the data window reads
@@ -3392,6 +3430,7 @@ export class NativeRenderer implements IChartRenderer {
             priceStyle: this.scene.priceStyle,
             nowMs,
             cursor: this.lastPointer,
+            i18n: this.i18n ?? englishTranslator(),
         };
     }
 
@@ -4518,15 +4557,6 @@ function isPriceStyle(v: unknown): v is PriceStyle {
 /** Coerce an untrusted value to a valid `ScaleMode`, defaulting to absolute `'price'`. */
 function asScaleMode(v: unknown): ScaleMode {
     return v === 'percent' || v === 'indexed' ? v : 'price';
-}
-
-/** Abbreviate a volume with a K/M/B suffix (e.g. `1.23M`). */
-function formatVolume(v: number): string {
-    const a = Math.abs(v);
-    if (a >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
-    if (a >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
-    if (a >= 1e3) return `${(v / 1e3).toFixed(2)}K`;
-    return v.toFixed(2);
 }
 
 /** Sort ascending + dedupe by time (last write wins). */

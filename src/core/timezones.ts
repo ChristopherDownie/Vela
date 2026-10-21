@@ -114,7 +114,9 @@ export function timezoneMenuRows(current: string): TimezoneRow[] {
     return [utc!, { value: EXCHANGE_TIMEZONE, label: 'Exchange', checked: isExchangeTimezone(current) }, ...zones];
 }
 
-/** Current UTC offset of an IANA zone as `"UTC"`, `"UTC+2"` or `"UTC-9:30"`. */
+/** Current UTC offset of an IANA zone as `"UTC"`, `"UTC+2"` or `"UTC-9:30"`. The
+ *  formatter stays pinned to en-US whatever the chart's locale: the `GMT±h:mm` it emits is
+ *  PARSED below, and a localized one could spell the offset differently. */
 export function tzOffset(zone: string, date: Date = new Date()): string {
     try {
         const parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(date);

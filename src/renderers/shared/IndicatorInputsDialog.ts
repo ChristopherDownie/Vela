@@ -1,5 +1,6 @@
 import { inputVisible, type InputSchema, type InputValue, type SymbolPickerFn } from '../../core/model/inputs';
 import type { VelaTheme } from '../../core/options';
+import type { Translator } from '../../core/i18n/types';
 import { isDarkColor } from '../../core/color';
 import { iconAt } from '../../core/icons';
 import { applyChromeTokens } from './theme-tokens';
@@ -50,6 +51,8 @@ export interface IndicatorDialogHost {
     mobile: () => boolean;
     dialogHost: () => HTMLElement | null;
     symbolPicker: () => SymbolPickerFn | null;
+    /** The chart's translator (the calendar's month names, week start and digits); absent = English. */
+    i18n?: () => Translator | null;
     onChange: ((c: InputsUIChange) => void) | null;
     onBackdropClose: () => void;
 }
@@ -666,6 +669,7 @@ export class IndicatorInputsDialog {
             content: (el) => {
                 const picker = new DatePicker({
                     value: current,
+                    i18n: this.host.i18n?.() ?? undefined,
                     onPick: (iso) => {
                         pop.hide();
                         onPick(iso);

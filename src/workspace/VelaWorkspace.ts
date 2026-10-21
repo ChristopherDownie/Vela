@@ -19,6 +19,8 @@ import { ensureUIHost, injectStyles, registerIcon, svg16 } from '../ui';
 import { isEditableTarget, KeymapManager } from '../ui/keymap';
 import { Menu } from '../ui/components/menu';
 import type { Vela } from '../Vela';
+import { LocaleState, pickLocalization } from '../core/i18n/translator';
+import type { LocaleChangedEvent, LocalizationOptions, Translator } from '../core/i18n/types';
 import { Topbar, priceStyleLabel, priceStyleIcon } from '../widget/topbar';
 import { Bottombar, RANGE_PRESETS } from '../widget/bottombar';
 import { SecondClock } from '../core/util/wall-clock';
@@ -154,6 +156,9 @@ export interface WorkspaceEventMap extends Record<string, unknown> {
     /** The persistable state changed (debounced ~500ms) — re-pull `getState()` if you
      *  consume it. The signal custom persistence flows build on. */
     'state:changed': undefined;
+    /** The workspace's localization changed (`setLocale`), after every cell and the shared
+     *  chrome have re-rendered. */
+    'locale:changed': LocaleChangedEvent;
 }
 
 const DEFAULT_TIMEFRAMES = ['1', '5', '15', '30', '60', '240', 'D', 'W', 'M'];
@@ -283,6 +288,8 @@ export class VelaWorkspace {
     private readonly splitters: SplitterLayer;
     private readonly resizeObserver: ResizeObserver | null = null;
     private readonly opts: VelaWorkspaceOptions;
+    /** The workspace's ONE localization — every cell's chart and the shared chrome follow it. */
+    private readonly localeState: LocaleState;
     private def: LayoutDefinition;
     /** Cell identities by SLOT POSITION — `order[i]` lives in the layout's i-th slot.
      *  Names come from the `cells` declaration order (then the persisted document);
@@ -418,6 +425,7 @@ export class VelaWorkspace {
         const hostEl = typeof container === 'string' ? document.querySelector<HTMLElement>(container) : container;
         if (!hostEl) throw new Error(`VelaWorkspace: container not found: ${String(container)}`);
         this.opts = opts;
+        this.localeState = new LocaleState(pickLocalization(opts));
         // Before any cell exists: the replay watches every cell from its creation on.
         this.replay = new WorkspaceReplay({
             cells: () => this.cells(),
@@ -479,6 +487,7 @@ export class VelaWorkspace {
         this.root = doc.createElement('div');
         this.root.className = 'vela-workspace';
         ensureUIHost(this.root, resolveTheme(opts.theme));
+        this.applyRootAttributes();
 
         // ONE shared feed: providers registered once; every cell's `chart.data` operates
         // on the same registry, symbol index, and closed-bar cache.
@@ -910,6 +919,43 @@ export class VelaWorkspace {
         return this.events.on(event, handler);
     }
 
+    /**
+     * The workspace's translator: its resolved locale and direction, `t()` for messages and
+     * `format` for numbers and dates. Every cell's chart carries the same settings
+     * (`cell.chart.i18n`), and contributed actions read it as `ctx.i18n`. The same object
+     * for the workspace's lifetime; it reads the new settings after {@link setLocale}.
+     */
+    get i18n(): Translator {
+        return this.localeState;
+    }
+
+    /**
+     * Change the language, direction or formatting of the whole workspace at runtime — a
+     * locale tag (`ws.setLocale('de')`) or any {@link LocalizationOptions} fields. Fields
+     * you pass replace their current value (an explicit `undefined` restores the default);
+     * the others are kept. Every cell re-renders in place, the shared chrome follows, and
+     * `locale:changed` fires. Register the locale's pack (`registerLocale`) first for
+     * translated text.
+     */
+    setLocale(next: string | LocalizationOptions): void {
+        if (this.destroyed) return;
+        const patch = typeof next === 'string' ? { locale: next } : pickLocalization(next);
+        this.localeState.update(patch);
+        this.applyRootAttributes();
+        for (const cell of this.cellsById.values()) cell.chart.setLocale(patch);
+        this.events.emit('locale:changed', { locale: this.localeState.locale, direction: this.localeState.direction });
+    }
+
+    /** `lang` once the host set a locale, `dir` once it set a direction; otherwise the
+     *  attributes stay off and the host page decides. */
+    private applyRootAttributes(): void {
+        const s = this.localeState;
+        if (s.localeExplicit) this.root.setAttribute('lang', s.locale);
+        else this.root.removeAttribute('lang');
+        if (s.directionExplicit) this.root.setAttribute('dir', s.direction);
+        else this.root.removeAttribute('dir');
+    }
+
     /** The context handed to contributed actions/attachments (rebuilt per invocation). */
     context(): WorkspaceWidgetContext {
         return buildContext({
@@ -926,6 +972,7 @@ export class VelaWorkspace {
                 };
             },
             root: this.root,
+            i18n: this.localeState,
             toast: (message, kind) => this.toastHost.show(message, kind),
             stateDirty: () => this.markStateDirty(),
             replay: this.replay,
@@ -1662,6 +1709,7 @@ export class VelaWorkspace {
                 feed: this.feed,
                 engines: this.opts.engines ?? {},
                 chartDefaults: cellChartDefaults(this.opts),
+                localization: () => this.localeState.options,
                 theme,
                 live: this.opts.live ?? false,
                 volume: this.opts.volume ?? true,
@@ -2483,7 +2531,7 @@ export class VelaWorkspace {
             label: 'Show this shortcuts panel',
             category: 'Help',
             run: () => {
-                this.shortcutsHelp ??= new ShortcutsHelp(this.keymap, this.root, (open) => this.trackDialog(open));
+                this.shortcutsHelp ??= new ShortcutsHelp(this.keymap, this.root, (open) => this.trackDialog(open), () => this.localeState);
                 this.shortcutsHelp.open();
             },
         });

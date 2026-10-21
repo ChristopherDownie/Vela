@@ -9,6 +9,13 @@ import type { Unsubscribe } from '../util/types';
 import type { WallClock } from '../util/wall-clock';
 import type { IDrawingsRendererPort } from '../drawings/port';
 import type { MarkClickEvent, MarkGroup, TimelineMark } from '../marks/types';
+import type { TextDirection, Translator } from '../i18n/types';
+
+/** The language and direction attributes of a renderer's root element (`null` = unset). */
+export interface RendererRootAttributes {
+    lang: string | null;
+    dir: TextDirection | null;
+}
 
 /** What a rendering backend supports — drives graceful degradation + warnings. */
 export interface RendererCapabilities {
@@ -238,6 +245,14 @@ export interface IChartRenderer {
 
     mount(container: HTMLElement, theme: VelaTheme): void;
     setTheme(theme: VelaTheme): void;
+    /**
+     * Adopt the chart's localization: render text through `i18n` and numbers and dates
+     * through `i18n.format`, then repaint. Called once after `mount` and again after every
+     * `chart.setLocale`. `lang` and `dir` are what the renderer's root element should carry
+     * (`null` = leave the attribute alone, the host page decides). Optional: a renderer
+     * without it keeps English text and formatting.
+     */
+    setLocalization?(i18n: Translator, root: RendererRootAttributes): void;
     resize(): void;
     destroy(): void;
 

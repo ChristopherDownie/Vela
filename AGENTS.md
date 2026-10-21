@@ -183,7 +183,9 @@ descriptors working when multiple charts exist.
 **Style and prose.**
 
 - **Everything in the repo is English** — code, comments, commits, docs — regardless of
-  the conversation language.
+  the conversation language. The one exception: translation message files under
+  `src/locales/`, each holding one language's UI text keyed by the English source's
+  message ids.
 - **Never name other charting products in code, comments, or commit messages.** Describe
   features by their own behavior, not by whose product they resemble.
 - Comments state constraints the code can't show. No "what the next line does," no

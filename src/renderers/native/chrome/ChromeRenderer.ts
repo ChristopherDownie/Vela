@@ -338,7 +338,7 @@ export class ChromeRenderer {
                 const sc = scene.indicatorScales.get(model.id)?.scale;
                 if (!sc) return;
                 const x = axisColumnX(dataW, k + 1); // column 0 is the master scale
-                for (const t of paneAxisTicks(sc, pane.bounds.height, undefined, scene.priceMintick)) {
+                for (const t of paneAxisTicks(sc, pane.bounds.height, undefined, scene.priceMintick, undefined, scene.format)) {
                     const y = coords.priceToY(t.price, sc, pane.bounds);
                     if (y < pane.bounds.top + 6 || y > pane.bounds.top + pane.bounds.height - 4) continue;
                     ctx.fillText(t.label, x + 5, y);
@@ -383,12 +383,12 @@ export class ChromeRenderer {
         }
 
         // ── axis chips: last-price label and/or countdown ──
-        const cdText = scene.showCountdown ? countdownText(last.time, coords.barInterval, Date.now()) : null;
+        const cdText = scene.showCountdown ? countdownText(last.time, coords.barInterval, Date.now(), scene.format) : null;
         const showCountdown = cdText !== null;
         const showLabel = scene.showPriceLabel;
         if (!showLabel && !showCountdown) return;
 
-        const priceText = formatAxisValue(pricePane.scale, pricePane.bounds.height, last.close, percentScaleFor(scene, pricePane), scene.priceMintick);
+        const priceText = formatAxisValue(pricePane.scale, pricePane.bounds.height, last.close, percentScaleFor(scene, pricePane), scene.priceMintick, undefined, scene.format, 'lastPrice');
         const PAD = 8;
         const x = dataW + 1;
         // Text color chosen for contrast against the chip's own color (so a white candle
@@ -466,7 +466,7 @@ export class ChromeRenderer {
         // step whose few ticks can all miss the frame); the collision pass below is
         // what actually prevents overlap.
         const target = Math.max(3, Math.min(8, Math.floor(dataW / 64)));
-        const ticks = timeTicks(tr.from, tr.to, target, offset)
+        const ticks = timeTicks(tr.from, tr.to, target, offset, scene.format)
             .map((tick) => ({ ...tick, x: coords.timeToX(tick.time), half: ctx.measureText(tick.label).width / 2 }))
             .filter((tick) => tick.x >= 20 && tick.x <= dataW - 20);
         // Measured collision pass on top: label pitch in PIXELS isn't uniform (bar-index

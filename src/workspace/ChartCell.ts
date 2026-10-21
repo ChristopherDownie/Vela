@@ -39,6 +39,7 @@ import { prefixedSymbol, type CellState } from '../state/document';
 import { parseSymbol } from '../data/ProviderRegistry';
 import { isExchangeTimezone, normalizeTimezone, resolveTimezone, timezoneMenuRows } from '../core/timezones';
 import { applyPlotOverlayTokens } from '../ui';
+import type { LocalizationOptions } from '../core/i18n/types';
 
 /** The seed/mutable market state of one cell (all optional — an empty cell parks).
  *  The SAME vocabulary as the widget's chart options: the workspace's top-level chart
@@ -134,6 +135,9 @@ export interface CellDeps {
     engines: Record<string, () => ScriptingEngine>;
     /** The workspace's top-level chart options every cell's chart starts from. */
     chartDefaults: CellChartDefaults;
+    /** The workspace's CURRENT localization — a cell built after a `setLocale` starts in it
+     *  (absent = the chart defaults: English). */
+    localization?(): LocalizationOptions;
     theme: VelaTheme;
     live: boolean;
     volume: boolean;
@@ -324,6 +328,7 @@ export class ChartCell {
             this.host,
             {
                 ...deps.chartDefaults,
+                ...deps.localization?.(),
                 symbol,
                 timeframe: seed.timeframe,
                 bars: seed.bars,

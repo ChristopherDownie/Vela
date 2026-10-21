@@ -1,0 +1,19 @@
+{
+    "ui.datePicker.chooseMonth": "Choose month",
+    "ui.datePicker.chooseYear": "Choose year",
+    "ui.datePicker.nextDecade": "Next decade",
+    "ui.datePicker.nextMonth": "Next month",
+    "ui.datePicker.nextYear": "Next year",
+    "ui.datePicker.previousDecade": "Previous decade",
+    "ui.datePicker.previousMonth": "Previous month",
+    "ui.datePicker.previousYear": "Previous year",
+    "widget.shortcuts.deleteDrawing": "Delete the drawing under the cursor",
+    "widget.shortcuts.deleteDrawingKeys": "Middle-click",
+    "widget.shortcuts.measure": "Measure from the press point",
+    "widget.shortcuts.measureKeys": "Shift+Click",
+    "widget.shortcuts.mouse": "Mouse",
+    "widget.shortcuts.scrollHistory": "Scroll through history",
+    "widget.shortcuts.scrollHistoryKeys": "Shift+Scroll",
+    "widget.shortcuts.title": "Keyboard shortcuts",
+    "widget.shortcuts.typing": "Typing a letter or 0 opens the symbol search; typing a digit from 1 to 9 opens the timeframe entry."
+}

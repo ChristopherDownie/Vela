@@ -2,6 +2,34 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Added
+
+- **Charts that speak your users' language.** A chart, a workspace and the widget take a
+  `locale`, and `setLocale()` switches it at runtime without re-running indicators, then
+  emits `locale:changed`. The price and time axes, the crosshair, the last-price label and
+  its countdown, the legend and the data window format their numbers and dates for the
+  locale, with its separators, month names and abbreviations, while keeping Western digits,
+  the Gregorian calendar and a 24-hour clock in every language unless you choose otherwise
+  (`numberingSystem`, `hourCycle`). The date picker names months and weekdays in the locale
+  and starts its weeks on the locale's first day (`weekStart`). Interface text comes from
+  locale packs you register with `registerLocale()`, and anything a pack leaves out reads in
+  English; `messages` rewords any message, and `formatters` replaces any number or date
+  format. `direction: 'rtl'` or `'auto'` marks the chrome right to left, while the plot keeps
+  time running left to right with the price axis on the right. Plugins declare their own text
+  with `msg()` and read the chart's translator as `ctx.i18n`, and in renderer layers as
+  `args.i18n`. With none of these options set, a chart looks exactly as before. The new
+  Localization guide covers it all.
+
+### Changed
+
+- **The English-only formatting helpers are deprecated.** `fmtPrice` and `fmtChange` from
+  `@luxalgo/vela/widget`, and the date picker's `MONTH_LABELS` and `WEEKDAY_LABELS` from
+  `@luxalgo/vela/ui`, keep working and keep returning English. Format through a chart's
+  `i18n.format` instead, and read the picker's names from its controller, which follows the
+  `i18n` option.
+
 ## [0.8.5]
 
 ### Added

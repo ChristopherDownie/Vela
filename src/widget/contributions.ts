@@ -8,6 +8,7 @@ import type { ScriptingEngine } from '../core/ports/ScriptingEngine';
 import type { SymbolDescriptor } from '../core/ports/DataProvider';
 import type { InputValue } from '../core/model/inputs';
 import type { IndicatorHandle } from '../core/IndicatorHandle';
+import type { Translator } from '../core/i18n/types';
 import { TOPBAR_BUILTIN_IDS } from './topbar-composition';
 
 /** The runtime surface an action's `when`/`run` receives. */
@@ -40,6 +41,10 @@ export interface WidgetContext {
      *  (Dialog/Menu/Tooltip) from an action; without an explicit host they portal to
      *  the body, OUTSIDE the theme variables. A multi-chart shell hands its own root. */
     host: HTMLElement;
+    /** The shell's translator: `i18n.t(msg(...))` for text an action or panel renders,
+     *  `i18n.format` for its numbers and dates, `i18n.direction` for its layout. It follows
+     *  `setLocale`; listen to the shell's `locale:changed` to re-render. */
+    i18n: Translator;
     /** The widget's feedback pill (bottom-center, auto-hides). */
     toast(message: string, kind?: 'info' | 'success' | 'error'): void;
     /** Add a SCRIPT indicator to the active chart THROUGH THE SHELL — unlike the raw

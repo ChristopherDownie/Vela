@@ -1,6 +1,7 @@
 import type { InputSchema, InputValue, SymbolPickerFn } from '../../core/model/inputs';
 import type { LegendActionView, LegendCalloutView } from '../../core/ports/IChartRenderer';
 import type { VelaTheme, MoveTarget } from '../../core/options';
+import type { Translator } from '../../core/i18n/types';
 import { withAlpha } from '../../core/color';
 import { iconAt } from '../../core/icons';
 import { applyChromeTokens } from './theme-tokens';
@@ -236,6 +237,13 @@ export class InputsUI {
      *  pane-anchored rows always stay in the container. */
     private dialogHost: HTMLElement | null = null;
 
+    /** The chart's translator — the settings dialog's calendar reads its locale. */
+    private i18n: Translator | null = null;
+
+    setI18n(i18n: Translator | null): void {
+        this.i18n = i18n;
+    }
+
     setDialogHost(host: HTMLElement | null): void {
         this.dialogHost = host;
         if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
@@ -256,6 +264,7 @@ export class InputsUI {
             mobile: () => this.mobileLayout,
             dialogHost: () => this.dialogHost,
             symbolPicker: () => this.symbolPicker,
+            i18n: () => this.i18n,
             onChange: (c) => this.onChange?.(c),
             onBackdropClose: () => this.clearSelection(),
         });
