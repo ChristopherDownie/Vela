@@ -83,14 +83,32 @@ ws.setLocale('ko'); // every cell, the shared panels, and cells a later layout c
 
 ## Use a shipped language
 
-Vela publishes a locale pack for each of these languages:
+Vela publishes a locale pack for each of these 19 languages, each imported as
+`@luxalgo/vela/locales/<tag>`:
 
-| Language | Tag | Import |
+| Language | Native name | Tag |
 |---|---|---|
-| Spanish (Español) | `es` | `@luxalgo/vela/locales/es` |
-| Russian (Русский) | `ru` | `@luxalgo/vela/locales/ru` |
+| Arabic | العربية | `ar` |
+| Chinese (Simplified) | 简体中文 | `zh-Hans` |
+| Chinese (Traditional) | 繁體中文 | `zh-Hant` |
+| French | Français | `fr` |
+| German | Deutsch | `de` |
+| Hebrew | עברית | `he` |
+| Hindi | हिन्दी | `hi` |
+| Indonesian | Bahasa Indonesia | `id` |
+| Italian | Italiano | `it` |
+| Japanese | 日本語 | `ja` |
+| Korean | 한국어 | `ko` |
+| Malay | Bahasa Melayu | `ms` |
+| Polish | Polski | `pl` |
+| Portuguese (Brazil) | Português (Brasil) | `pt-BR` |
+| Russian | Русский | `ru` |
+| Spanish | Español | `es` |
+| Thai | ภาษาไทย | `th` |
+| Turkish | Türkçe | `tr` |
+| Vietnamese | Tiếng Việt | `vi` |
 
-Each pack translates every message Vela shows: the chrome, the built-in indicators, the
+Each pack covers the whole interface: the chrome, the built-in indicators, the
 drawing tools, the chart settings and the time zone names. Names stay as written in every
 language: Vela, LuxAlgo, PineTS, Pine Script®, tickers, and the indicators the trading
 literature knows by their English name. Numbers keep Western digits.
@@ -114,8 +132,16 @@ registerLocale(pack);
 ws.setLocale(pack.locale);
 ```
 
-A pack for a right-to-left language carries `direction: 'rtl'`. Pass `direction: 'auto'`
-with its locale and the chrome mirrors; see [Right to left](#right-to-left).
+The Arabic and Hebrew packs carry `direction: 'rtl'`. Pass `direction: 'auto'` with their
+locale and the chrome mirrors, while the plot keeps reading left to right; see
+[Right to left](#right-to-left):
+
+```ts
+import ar from '@luxalgo/vela/locales/ar';
+
+registerLocale(ar);
+chart.setLocale({ locale: 'ar', direction: 'auto' });
+```
 
 With a pack active, the indicator picker finds an indicator by its translated name and by
 its English name, so a search for "Relative Strength" works in every language.
@@ -338,10 +364,10 @@ fail when either file is out of date, or when a pack under `src/locales/` names 
 message or changes a message's arguments.
 
 The shipped packs live beside it, one `<tag>.json` of messages and one `<tag>.ts` entry point
-per language; the build publishes each as `@luxalgo/vela/locales/<tag>`. A message a pack
-lacks reads in English, so a pack can trail a new message for a while. The workspace's own
-chrome cannot: the pack tests open a workspace in every shipped language and fail when an
-English word shows in its bars, panels and dialogs. When you add text there, add its
-translation to every pack. The pack tests also check that every message parses, takes the
-same values as English, has each plural form its language needs, keeps the product names,
-and writes Western digits.
+per language; the build publishes each as `@luxalgo/vela/locales/<tag>`. You don't need to
+translate the text you add: a message a pack lacks reads in English until a translation
+lands, and `npm run i18n:check` lists how many messages each pack translates. The pack tests
+fail when a pack names an unknown message, when one of its messages doesn't parse, takes
+other values than the English, lacks a plural form its language needs, drops a product name
+or writes other digits than 0 to 9, and when a workspace in a shipped language shows English
+that comes from no message at all.

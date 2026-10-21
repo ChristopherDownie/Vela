@@ -1,5 +1,5 @@
-// The Spanish pack (`@luxalgo/vela/locales/es`): every core message in Spanish.
-// Importing it registers nothing: pass it to `registerLocale`, then set the locale `'es'`.
+// `@luxalgo/vela/locales/es`: every core message in Spanish. Importing it
+// registers nothing: pass it to `registerLocale`, then set the locale `'es'`.
 import type { LocalePack } from '../core/i18n/types';
 import messages from './es.json';
 

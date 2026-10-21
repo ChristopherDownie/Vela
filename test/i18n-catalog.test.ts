@@ -55,12 +55,19 @@ describe('the shipped locale packs', () => {
     const packs = Object.entries(packFiles).filter(([file]) => !file.endsWith('/en.json'));
 
     it('each parses, names only known messages and keeps their arguments', () => {
+        const problems: string[] = [];
         for (const [file, pack] of packs) {
             for (const [id, text] of Object.entries(pack)) {
-                expect(english[id], `${file}: unknown message id ${id}`).toBeDefined();
-                expect(() => parseMessage(text), `${file}: ${id}`).not.toThrow();
-                expect(argumentNames(text), `${file}: ${id}`).toEqual(argumentNames(english[id]!));
+                if (english[id] === undefined) problems.push(`${file}: unknown message id ${id}`);
+                else {
+                    try {
+                        if (argumentNames(text).join() !== argumentNames(english[id]).join()) problems.push(`${file}: ${id} changes its arguments`);
+                    } catch {
+                        problems.push(`${file}: ${id} does not parse`);
+                    }
+                }
             }
         }
+        expect(problems).toEqual([]);
     });
 });

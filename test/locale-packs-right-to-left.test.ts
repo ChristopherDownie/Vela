@@ -90,7 +90,7 @@ describe.each(rightToLeft)('a chart in $tag', ({ tag, pack }) => {
         expect(host.querySelector('.vela-workspace')!.getAttribute('dir')).toBe('rtl');
         const topbar = host.querySelector<HTMLElement>('.vela-widget-indicators')!;
         expect(getComputedStyle(topbar).direction).toBe('rtl');
-        expect(topbar.textContent).toBe(pack.messages['widget.topbar.indicators']);
+        expect(topbar.textContent).toBe(pack.messages['widget.topbar.indicators'] ?? 'Indicators');
     });
 
     it('keeps the plot, the price axis and every number it paints left to right', async () => {
