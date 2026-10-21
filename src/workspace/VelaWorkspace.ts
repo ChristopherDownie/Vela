@@ -691,6 +691,7 @@ export class VelaWorkspace {
                   },
                   {
                       dock: 'static',
+                      i18n: () => this.localeState,
                       // Drawings sync is a WORKSPACE link (same model as the layout
                       // dropdown's switches) — the bar only hosts its toggle.
                       onDrawingsSync: (on) => {
@@ -2334,6 +2335,7 @@ export class VelaWorkspace {
             onFavorite: (type, on) => this.active.chart.drawings.setFavorite(type, on),
             onSelect: (type) => this.active.chart.drawings.setTool(type),
             onOpenChange: (open) => this.trackDialog(open),
+            i18n: () => this.localeState,
         });
         this.drawingsDrawer.open();
     }

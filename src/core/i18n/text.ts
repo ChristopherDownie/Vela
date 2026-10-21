@@ -2,9 +2,9 @@
 // the code that keys on a name (series ids, persisted option values, script-readable
 // titles) reads its English source text, which no locale pack or override can change.
 import { ENGLISH_SETTINGS } from '../format/formatters';
-import { formatMessageNumber } from '../format/numbers';
+import { formatMessageNumber, localizeAscii } from '../format/numbers';
 import { formatMessage, type MessageValues } from './icu';
-import { englishTranslator, isMessageDescriptor } from './translator';
+import { englishTranslator, formatSettingsOf, isMessageDescriptor } from './translator';
 import type { MessageLike, Translator } from './types';
 
 const ENGLISH_RUNTIME = {
@@ -32,4 +32,20 @@ export function sourceText(message: MessageLike | null | undefined, values?: Mes
 /** Display text through `i18n`, or in English when no translator is at hand. */
 export function textOf(i18n: Translator | null | undefined, message: MessageLike, values?: MessageValues): string {
     return (i18n ?? englishTranslator()).t(message, values);
+}
+
+/** Upper-case text by the casing rules of `locale` (Turkish dotted İ, …); a tag the engine
+ *  rejects falls back to the default rules. */
+export function upperCase(text: string, locale: string | undefined): string {
+    try {
+        return text.toLocaleUpperCase(locale);
+    } catch {
+        return text.toUpperCase();
+    }
+}
+
+/** Number text written with ASCII digits, `.` and `-` (a ratio, a `toFixed` price), in the
+ *  digits and separators of `i18n`'s locale; unchanged in English. */
+export function localizeNumberText(text: string, i18n: Translator | null | undefined): string {
+    return localizeAscii(text, formatSettingsOf(i18n));
 }

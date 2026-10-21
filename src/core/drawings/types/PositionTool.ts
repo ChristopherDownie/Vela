@@ -1,3 +1,6 @@
+import { msg } from '../../i18n/message';
+import type { MessageLike, Translator } from '../../i18n/types';
+import { localizeNumberText, textOf } from '../../i18n/text';
 import { Drawing, type AnchorSlot, type SerializedDrawing } from '../Drawing';
 import type { Projector } from '../geometry';
 import type { SettingsSchema } from '../schema';
@@ -5,13 +8,23 @@ import { LINE_FIELDS, TEXT_SIZE_OPTIONS } from '../schema';
 import { pointInBox, handleAt } from '../hittest';
 import { VALID, INVALID } from '../../palette';
 
+/** The painted labels; `direction` is `long` or `short`, numbers come formatted. */
+const POSITION_TEXT = {
+    header: msg('drawing.position.header', '{direction, select, long {LONG} other {SHORT}}  ·  R:R {ratio}'),
+    lossSize: msg('drawing.position.lossSize', 'Loss ${loss}  ·  Size {size}'),
+    target: msg('drawing.position.targetLabel', 'Target +{percent}%'),
+    targetAt: msg('drawing.position.targetLabelAt', 'Target +{percent}%  @ {price}'),
+    stop: msg('drawing.position.stopLabel', 'Stop −{percent}%'),
+    stopAt: msg('drawing.position.stopLabelAt', 'Stop −{percent}%  @ {price}'),
+};
+
 /** How the gear panel's stop/target inputs interpret their value. */
 export type PositionLevelMode = 'price' | 'points';
 
 /** Choices for the direction select (long ↔ short mirrors the levels across the entry). */
-export const DIRECTION_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-    { value: 'long', label: 'Long' },
-    { value: 'short', label: 'Short' },
+export const DIRECTION_OPTIONS: ReadonlyArray<{ value: string; label: MessageLike }> = [
+    { value: 'long', label: msg('drawing.position.option.long', 'Long') },
+    { value: 'short', label: msg('drawing.position.option.short', 'Short') },
 ];
 
 /**
@@ -275,28 +288,37 @@ export class PositionTool extends Drawing {
 
     // ── painted label lines (each respects its own toggle; the painter checks showText) ──
 
-    /** `DIR · R:R x.xx` — the always-on header when text is shown. */
-    headerLabel(): string {
-        return `${this.directionLabel()}  ·  R:R ${this.rr().toFixed(2)}`;
+    /** `DIR · R:R x.xx` — the always-on header when text is shown, in `i18n`'s language
+     *  (English without one). */
+    headerLabel(i18n?: Translator): string {
+        return textOf(i18n, POSITION_TEXT.header, {
+            direction: this.directionLabel() === 'LONG' ? 'long' : 'short',
+            ratio: localizeNumberText(this.rr().toFixed(2), i18n),
+        });
     }
 
     /** `Loss $… · Size …` — the painter hides it when showLossSize is off. */
-    lossSizeLabel(): string {
-        return `Loss $${formatMoney(this.dollarLoss())}  ·  Size ${formatQty(this.positionSize())}`;
+    lossSizeLabel(i18n?: Translator): string {
+        return textOf(i18n, POSITION_TEXT.lossSize, {
+            loss: localizeNumberText(formatMoney(this.dollarLoss()), i18n),
+            size: localizeNumberText(formatQty(this.positionSize()), i18n),
+        });
     }
 
     /** `Target +x.xx%`, with the level price appended when showPrices is on. */
-    targetLabel(): string {
+    targetLabel(i18n?: Translator): string {
         const p = this.prices();
-        const at = this.showPrices && p ? `  @ ${formatPrice(p.target)}` : '';
-        return `Target +${this.rewardPct().toFixed(2)}%${at}`;
+        const percent = localizeNumberText(this.rewardPct().toFixed(2), i18n);
+        if (this.showPrices && p) return textOf(i18n, POSITION_TEXT.targetAt, { percent, price: localizeNumberText(formatPrice(p.target), i18n) });
+        return textOf(i18n, POSITION_TEXT.target, { percent });
     }
 
     /** `Stop −x.xx%`, with the level price appended when showPrices is on. */
-    stopLabel(): string {
+    stopLabel(i18n?: Translator): string {
         const p = this.prices();
-        const at = this.showPrices && p ? `  @ ${formatPrice(p.stop)}` : '';
-        return `Stop −${this.riskPct().toFixed(2)}%${at}`;
+        const percent = localizeNumberText(this.riskPct().toFixed(2), i18n);
+        if (this.showPrices && p) return textOf(i18n, POSITION_TEXT.stopAt, { percent, price: localizeNumberText(formatPrice(p.stop), i18n) });
+        return textOf(i18n, POSITION_TEXT.stop, { percent });
     }
 
     // ── stop/target input units (the gear panel's Price / Points dropdowns) ──
@@ -376,24 +398,24 @@ export class PositionTool extends Drawing {
     schema(): SettingsSchema {
         return {
             fields: [
-                { path: 'riskPercent', label: 'Risk %', kind: 'number', min: 0, max: 100, step: 0.1, group: 'behavior' },
-                { path: 'accountBalance', label: 'Account balance', kind: 'number', min: 0, max: 1e12, step: 1, group: 'behavior' },
-                { path: 'quantity', label: 'Position size', kind: 'number', group: 'behavior' },
-                { path: 'direction', label: 'Direction', kind: 'select', options: DIRECTION_OPTIONS, group: 'behavior' },
-                { path: 'entryPrice', label: 'Entry price', kind: 'number', group: 'behavior' },
-                { path: 'stopPrice', label: 'Stop price', kind: 'number', group: 'behavior' },
-                { path: 'targetPrice', label: 'Target price', kind: 'number', group: 'behavior' },
-                { path: 'showText', label: 'Show text', kind: 'boolean', group: 'behavior' },
-                { path: 'showHeader', label: 'Show direction & ratio', kind: 'boolean', group: 'behavior' },
-                { path: 'showLossSize', label: 'Show loss & size', kind: 'boolean', group: 'behavior' },
-                { path: 'showTargetLabel', label: 'Show target label', kind: 'boolean', group: 'behavior' },
-                { path: 'showStopLabel', label: 'Show stop label', kind: 'boolean', group: 'behavior' },
-                { path: 'showPrices', label: 'Show level prices', kind: 'boolean', group: 'behavior' },
-                { path: 'profitColor', label: 'Profit zone', kind: 'color', group: 'fill' },
-                { path: 'lossColor', label: 'Loss zone', kind: 'color', group: 'fill' },
+                { path: 'riskPercent', label: msg('drawing.position.riskPercent', 'Risk %'), kind: 'number', min: 0, max: 100, step: 0.1, group: 'behavior' },
+                { path: 'accountBalance', label: msg('drawing.position.accountBalance', 'Account balance'), kind: 'number', min: 0, max: 1e12, step: 1, group: 'behavior' },
+                { path: 'quantity', label: msg('drawing.position.quantity', 'Position size'), kind: 'number', group: 'behavior' },
+                { path: 'direction', label: msg('drawing.position.direction', 'Direction'), kind: 'select', options: DIRECTION_OPTIONS, group: 'behavior' },
+                { path: 'entryPrice', label: msg('drawing.position.entryPrice', 'Entry price'), kind: 'number', group: 'behavior' },
+                { path: 'stopPrice', label: msg('drawing.position.stopPrice', 'Stop price'), kind: 'number', group: 'behavior' },
+                { path: 'targetPrice', label: msg('drawing.position.targetPrice', 'Target price'), kind: 'number', group: 'behavior' },
+                { path: 'showText', label: msg('drawing.position.showText', 'Show text'), kind: 'boolean', group: 'behavior' },
+                { path: 'showHeader', label: msg('drawing.position.showHeader', 'Show direction & ratio'), kind: 'boolean', group: 'behavior' },
+                { path: 'showLossSize', label: msg('drawing.position.showLossSize', 'Show loss & size'), kind: 'boolean', group: 'behavior' },
+                { path: 'showTargetLabel', label: msg('drawing.position.showTargetLabel', 'Show target label'), kind: 'boolean', group: 'behavior' },
+                { path: 'showStopLabel', label: msg('drawing.position.showStopLabel', 'Show stop label'), kind: 'boolean', group: 'behavior' },
+                { path: 'showPrices', label: msg('drawing.position.showPrices', 'Show level prices'), kind: 'boolean', group: 'behavior' },
+                { path: 'profitColor', label: msg('drawing.position.profitColor', 'Profit zone'), kind: 'color', group: 'fill' },
+                { path: 'lossColor', label: msg('drawing.position.lossColor', 'Loss zone'), kind: 'color', group: 'fill' },
                 ...LINE_FIELDS.filter((f) => f.path !== 'style.lineColor'),
-                { path: 'text.color', label: 'Text color', kind: 'color', group: 'text' },
-                { path: 'text.size', label: 'Text size', kind: 'select', options: TEXT_SIZE_OPTIONS, group: 'text' },
+                { path: 'text.color', label: msg('drawing.position.textColor', 'Text color'), kind: 'color', group: 'text' },
+                { path: 'text.size', label: msg('drawing.position.textSize', 'Text size'), kind: 'select', options: TEXT_SIZE_OPTIONS, group: 'text' },
             ],
         };
     }

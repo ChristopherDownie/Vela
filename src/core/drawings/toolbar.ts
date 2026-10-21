@@ -1,5 +1,7 @@
+import { msg } from '../i18n/message';
 import type { DrawingTypeKey } from './Drawing';
-import { drawingTypes, getDrawingType } from './registry';
+import type { MessageLike } from '../i18n/types';
+import { drawingTypeEntries, drawingTypeEntry } from './registry';
 
 /**
  * Inert, renderer-neutral toolbar data. The core builds it from the type registry;
@@ -9,20 +11,21 @@ import { drawingTypes, getDrawingType } from './registry';
  */
 export interface ToolDefinition {
     type: DrawingTypeKey;
-    label: string;
+    /** The tool's name; a message reads in the chart's language. */
+    label: MessageLike;
     /** Inline SVG markup (no DOM). */
     icon: string;
 }
 
 /** A labelled subsection inside a toolbar group's flyout (e.g. "Fibonacci" within Fibonacci & Gann). */
 export interface ToolSection {
-    label: string;
+    label: MessageLike;
     tools: ToolDefinition[];
 }
 
 export interface ToolGroup {
     id: string;
-    label: string;
+    label: MessageLike;
     tools: ToolDefinition[];
     /** When set, the flyout renders non-clickable headers between sections. */
     sections?: ToolSection[];
@@ -35,7 +38,8 @@ export interface ToolbarDefinition {
 /** A developer-supplied explicit group (just type keys; the registry fills the rest). */
 export interface ToolbarGroupConfig {
     id: string;
-    label: string;
+    /** The group's name; a message (`msg()`) reads in the chart's language. */
+    label: MessageLike;
     tools: DrawingTypeKey[];
 }
 
@@ -83,11 +87,11 @@ const SHAPE_TYPES: DrawingTypeKey[] = ['box', 'ellipse', 'triangle', 'polyline',
 const TEXT_TYPES: DrawingTypeKey[] = ['text', 'callout', 'note', 'pricenote', 'comment', 'pricelabel', 'signpost'];
 const ICON_TYPES: DrawingTypeKey[] = ['flagmark', 'iconstamp'];
 
-type SectionSource = { label: string; registryGroup: string } | { label: string; types: readonly DrawingTypeKey[] };
+type SectionSource = { label: MessageLike; registryGroup: string } | { label: MessageLike; types: readonly DrawingTypeKey[] };
 
 interface ToolbarGroupLayout {
     id: string;
-    label: string;
+    label: MessageLike;
     sections: readonly SectionSource[];
 }
 
@@ -95,71 +99,71 @@ interface ToolbarGroupLayout {
 const TOOLBAR_LAYOUT: readonly ToolbarGroupLayout[] = [
     {
         id: 'lines-channels-pitchforks',
-        label: 'Lines',
+        label: msg('drawing.toolbar.group.linesChannelsPitchforks', 'Lines'),
         sections: [
-            { label: 'Lines', registryGroup: 'lines' },
-            { label: 'Channels', registryGroup: 'channels' },
-            { label: 'Pitchforks', registryGroup: 'pitchforks' },
+            { label: msg('drawing.toolbar.section.lines', 'Lines'), registryGroup: 'lines' },
+            { label: msg('drawing.toolbar.section.channels', 'Channels'), registryGroup: 'channels' },
+            { label: msg('drawing.toolbar.section.pitchforks', 'Pitchforks'), registryGroup: 'pitchforks' },
         ],
     },
     {
         id: 'fibonacci-gann',
-        label: 'Fibonacci',
+        label: msg('drawing.toolbar.group.fibonacciGann', 'Fibonacci'),
         sections: [
-            { label: 'Fibonacci', types: FIBONACCI_TYPES },
-            { label: 'Price Action', types: PRICE_ACTION_TYPES },
-            { label: 'Gann', types: GANN_TYPES },
-            { label: 'Geometry', types: GEOMETRY_TYPES },
+            { label: msg('drawing.toolbar.section.fibonacci', 'Fibonacci'), types: FIBONACCI_TYPES },
+            { label: msg('drawing.toolbar.section.priceAction', 'Price Action'), types: PRICE_ACTION_TYPES },
+            { label: msg('drawing.toolbar.section.gann', 'Gann'), types: GANN_TYPES },
+            { label: msg('drawing.toolbar.section.geometry', 'Geometry'), types: GEOMETRY_TYPES },
         ],
     },
     {
         id: 'patterns-waves-harmonics',
-        label: 'Patterns',
+        label: msg('drawing.toolbar.group.patternsWavesHarmonics', 'Patterns'),
         sections: [
-            { label: 'Patterns', types: PATTERN_TYPES },
-            { label: 'Elliott Waves', types: ELLIOTT_TYPES },
-            { label: 'Harmonics', types: HARMONIC_TYPES },
+            { label: msg('drawing.toolbar.section.patterns', 'Patterns'), types: PATTERN_TYPES },
+            { label: msg('drawing.toolbar.section.elliottWaves', 'Elliott Waves'), types: ELLIOTT_TYPES },
+            { label: msg('drawing.toolbar.section.harmonics', 'Harmonics'), types: HARMONIC_TYPES },
         ],
     },
     {
         id: 'measurements',
-        label: 'Measurements',
+        label: msg('drawing.toolbar.group.measurements', 'Measurements'),
         sections: [
-            { label: 'Measurements', types: MEASUREMENT_TYPES },
-            { label: 'Volume', types: VOLUME_TYPES },
+            { label: msg('drawing.toolbar.section.measurements', 'Measurements'), types: MEASUREMENT_TYPES },
+            { label: msg('drawing.toolbar.section.volume', 'Volume'), types: VOLUME_TYPES },
         ],
     },
     {
         id: 'brushes-arrows-shapes',
-        label: 'Shapes',
+        label: msg('drawing.toolbar.group.brushesArrowsShapes', 'Shapes'),
         sections: [
-            { label: 'Brushes', types: BRUSH_TYPES },
-            { label: 'Arrows', types: ARROW_TYPES },
-            { label: 'Shapes', types: SHAPE_TYPES },
+            { label: msg('drawing.toolbar.section.brushes', 'Brushes'), types: BRUSH_TYPES },
+            { label: msg('drawing.toolbar.section.arrows', 'Arrows'), types: ARROW_TYPES },
+            { label: msg('drawing.toolbar.section.shapes', 'Shapes'), types: SHAPE_TYPES },
         ],
     },
     {
         id: 'text',
-        label: 'Text',
-        sections: [{ label: 'Text', types: TEXT_TYPES }],
+        label: msg('drawing.toolbar.group.text', 'Text'),
+        sections: [{ label: msg('drawing.toolbar.section.text', 'Text'), types: TEXT_TYPES }],
     },
     {
         id: 'icons',
-        label: 'Icons',
-        sections: [{ label: 'Icons', types: ICON_TYPES }],
+        label: msg('drawing.toolbar.group.icons', 'Icons'),
+        sections: [{ label: msg('drawing.toolbar.section.icons', 'Icons'), types: ICON_TYPES }],
     },
 ];
 
 /** Resolve a type key to a {@link ToolDefinition}, or null if unregistered. */
 function toolFor(type: DrawingTypeKey): ToolDefinition | null {
-    const meta = getDrawingType(type);
+    const meta = drawingTypeEntry(type);
     return meta ? { type: meta.type, label: meta.label, icon: meta.icon } : null;
 }
 
 /** Index registered tools by their declared registry group (registration order preserved). */
 function toolsByRegistryGroup(allowed?: ReadonlySet<DrawingTypeKey>): Map<string, ToolDefinition[]> {
     const byGroup = new Map<string, ToolDefinition[]>();
-    for (const meta of drawingTypes()) {
+    for (const meta of drawingTypeEntries()) {
         if (allowed && !allowed.has(meta.type)) continue;
         const tool = { type: meta.type, label: meta.label, icon: meta.icon };
         if (!byGroup.has(meta.group)) byGroup.set(meta.group, []);
@@ -206,7 +210,7 @@ function assembleToolbar(allowed?: ReadonlySet<DrawingTypeKey>): ToolbarDefiniti
 function groupTools(tools: readonly DrawingTypeKey[]): ToolbarDefinition {
     const allowed = new Set<DrawingTypeKey>();
     for (const type of tools) {
-        if (getDrawingType(type)) allowed.add(type);
+        if (drawingTypeEntry(type)) allowed.add(type);
     }
     return assembleToolbar(allowed);
 }

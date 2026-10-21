@@ -1617,6 +1617,7 @@ export class NativeRenderer implements IChartRenderer {
         // composites into the series stack, and owns the interaction/settings popup). It
         // implements the IDrawingsRendererPort the core DrawingController drives.
         this.userDrawings = new UserDrawingController(this.wrapper, this.plot, this.drawingsCanvas, {
+            i18n: () => this.i18n ?? englishTranslator(),
             projector: () => this.drawingProjector(),
             dpr: () => this.coords.dpr,
             theme: () => this.theme,
@@ -1870,6 +1871,7 @@ export class NativeRenderer implements IChartRenderer {
         this.inputsUI?.setI18n(i18n);
         this.applyRootAttributes();
         this.relabel();
+        this.userDrawings?.relocalize();
         if (this.scheduler) this.scheduler.invalidate(InvalidateLevel.Full);
     }
 
