@@ -122,7 +122,9 @@ applies it immediately. Rectangles matching a classic preset (`1`, `2h`, `2v`, `
 Plugin layouts the canvas cannot express (bespoke `areas`) list as labeled rows under
 the canvas, so `registerLayout` contributions keep appearing automatically. In code,
 the same composition is `layoutForGrid(rows, cols)` (exported from `@luxalgo/vela/workspace`),
-handed to `ws.setLayout(...)`.
+handed to `ws.setLayout(...)`. A registered layout's `label` may be a message (`msg()`), and
+`layouts(ws.i18n)` and `layoutDefinition(id, ws.i18n)` read every label as text in the
+workspace's language (English without a translator); read them again after `locale:changed`.
 
 Splitters between cells resize the grid tracks (double-click a divider for an even
 split).

@@ -349,7 +349,8 @@ export class VelaWorkspace {
      *  mobile drawings stop, no pill (the headless `chart.drawings` API stays). */
     private readonly drawingsEnabled: boolean;
     /** The shared bar's content — `drawings: { tools | groups }` picks it. */
-    private readonly toolbarDef: ToolbarDefinition;
+    /** The shared toolbar, labelled in the workspace's language (rebuilt when it changes). */
+    private toolbarDef: ToolbarDefinition;
     private destroyed = false;
 
     // ── shared chrome ──
@@ -611,7 +612,7 @@ export class VelaWorkspace {
                 // The picker composes dynamic layouts on its grid canvas; registered
                 // presets the canvas cannot express (bespoke plugin areas) list as rows.
                 shape: () => layoutShape(this.def),
-                presets: () => layouts().filter((l) => layoutShape(l) === null).map((l) => ({ id: l.id, label: this.t(l.label) })),
+                presets: () => layouts(this.localeState).filter((l) => layoutShape(l) === null).map((l) => ({ id: l.id, label: l.label })),
                 onSelectGrid: (rows, cols) => this.setLayout(layoutForGrid(rows, cols)),
                 onSelectPreset: (id) => this.setLayout(id),
                 // The SYNC switches reflect the simple all-cells form; flipping one
@@ -635,7 +636,7 @@ export class VelaWorkspace {
         // `chart.drawings` API stays), `{ toolbar: false }` hides the bar,
         // `{ tools | groups }` picks its content. `drawingToolbar: false` stays the
         // workspace-level bar opt-out.
-        const toolbar = buildToolbar(opts.drawings);
+        const toolbar = buildToolbar(opts.drawings, this.localeState);
         this.drawingsEnabled = opts.drawings !== false;
         this.toolbarDef = toolbar.definition;
         let toolbarHost: HTMLElement | null = null;
@@ -1005,6 +1006,8 @@ export class VelaWorkspace {
         this.bottombar?.relocalize();
         this.mobileBar?.relocalize();
         this.dock.relocalize();
+        this.toolbarDef = buildToolbar(this.opts.drawings, this.localeState).definition;
+        this.drawToolbar?.setDefinition(this.toolbarDef);
         this.drawToolbar?.relabel();
         this.drawToolbar?.setShortcuts(toolShortcutHints(this.keymap, this.localeState));
         this.drawingPill?.relocalize();
@@ -2440,9 +2443,9 @@ export class VelaWorkspace {
             layout: this.monoLayout || !has('layout') ? undefined : {
                 shape: () => layoutShape(this.def),
                 presets: () =>
-                    layouts()
+                    layouts(this.localeState)
                         .filter((l) => layoutShape(l) === null)
-                        .map((l) => ({ id: l.id, label: this.t(l.label), checked: l.id === this.def.id })),
+                        .map((l) => ({ id: l.id, label: l.label, checked: l.id === this.def.id })),
                 onSelectGrid: (rows, cols) => this.setLayout(layoutForGrid(rows, cols)),
                 onSelectPreset: (id) => this.setLayout(id),
                 syncs: () => this.syncRows(),

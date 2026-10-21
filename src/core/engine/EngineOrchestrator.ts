@@ -301,7 +301,7 @@ export class EngineOrchestrator implements IndicatorController, PaneController, 
             chartTimeframe: () => this.config.market.timeframe ?? '60',
             marketKey: () => `${this.config.market.symbol ?? ''}|${this.config.market.session ?? ''}`,
         });
-        this.drawings = new DrawingController(this.renderer, this.events, config.drawings, drawingSeries);
+        this.drawings = new DrawingController(this.renderer, this.events, config.drawings, drawingSeries, () => this.i18n);
         this.marks = new MarksController(this.renderer, this.events);
         // A symbol nothing can serve leaves the load PARKED; publish it so a host can say so
         // instead of showing a blank chart forever (it still resumes if a provider registers).
@@ -2651,12 +2651,14 @@ export class EngineOrchestrator implements IndicatorController, PaneController, 
     /** Adopt the chart's translator (one object for the chart's lifetime). */
     setTranslator(i18n: Translator): void {
         this.i18n = i18n;
+        this.drawings.relocalize(); // the toolbar went out before the chart's translator arrived
     }
 
-    /** The chart's language changed: native indicators' names, as the handles, the pane
-     *  listing and script runs report them, follow it. The renderer re-reads the display
-     *  names it shows on its own. */
+    /** The chart's language changed: the drawing toolbar's labels and native indicators'
+     *  names, as the handles, the pane listing and script runs report them, follow it. The
+     *  renderer re-reads the display names it shows on its own. */
     relocalize(): void {
+        this.drawings.relocalize();
         for (const r of this.registry.all()) {
             const d = r.native?.descriptor;
             if (!d) continue;

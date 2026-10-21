@@ -12,7 +12,9 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 };
 
 import { registerLocale } from '../src/plugin';
+import { buildToolbar } from '../src/core/drawings/toolbar';
 import { VelaWorkspace } from '../src/workspace/VelaWorkspace';
+import { layoutDefinition, layoutForGrid, layouts } from '../src/workspace/layouts';
 import english from '../src/locales/en.json';
 
 beforeAll(() => {
@@ -130,5 +132,42 @@ describe('a layout saved in one language', () => {
         const saved = JSON.stringify(ws.getState());
         expect(saved).toContain('"anchor":"Week"');
         expect(saved).not.toContain('Woche');
+    });
+});
+
+describe('reading what a chart offers', () => {
+    it("reading the toolbar, a layout or the layout list gives text, in the chart's language", () => {
+        disposers.push(
+            registerLocale({
+                locale: 'de',
+                messages: {
+                    'drawing.toolbar.group.icons': 'Symbole',
+                    'drawing.trendline.label': 'Trendlinie',
+                    'workspace.layout.single': 'Einzeln',
+                    'workspace.layout.grid': '{cols} × {rows} Raster',
+                },
+            }),
+        );
+        const host = document.createElement('div');
+        document.body.append(host);
+        const ws = new VelaWorkspace(host, { layout: false, locale: 'de' } as never);
+        disposers.push(() => ws.destroy());
+        const i18n = ws.cells()[0]!.chart.i18n;
+
+        const toolbar = buildToolbar(undefined, i18n).definition;
+        const labels = toolbar.groups.flatMap((g) => [g.label, ...g.tools.map((t) => t.label), ...(g.sections ?? []).map((s) => s.label)]);
+        for (const label of labels) expect(typeof label).toBe('string');
+        expect(labels).toContain('Symbole');
+        expect(labels).toContain('Trendlinie');
+
+        expect(layoutDefinition('1', i18n)!.label).toBe('Einzeln');
+        for (const layout of layouts(i18n)) expect(typeof layout.label).toBe('string');
+        expect(layouts(i18n).map((l) => l.label)).toContain('Einzeln');
+        expect(layoutForGrid(3, 2, i18n).label).toBe('2 × 3 Raster');
+
+        // Without a translator they read in English, as before.
+        expect(buildToolbar(undefined).definition.groups.map((g) => g.label)).toContain('Icons');
+        expect(layoutDefinition('1')!.label).toBe('Single');
+        expect(layoutForGrid(3, 2).label).toBe('2 × 3 grid');
     });
 });

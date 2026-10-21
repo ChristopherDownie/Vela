@@ -11,14 +11,15 @@
 // `registerLayout` is the SDK seam: plugins/hosts add denser grids or bespoke
 // arrangements, and every workspace layout picker reads the registry live.
 import { msg, withValues } from '../core/i18n/message';
-import type { MessageLike } from '../core/i18n/types';
+import { sourceText, textOf } from '../core/i18n/text';
+import type { MessageLike, Translator } from '../core/i18n/types';
 
 /** One registered workspace layout. */
 export interface LayoutDefinition {
     /** Stable id (`'4'`, `'2h'`, a plugin's `'6-tall'`, …) — re-registering replaces. */
     id: string;
-    /** Human-readable label for layout pickers. A message follows the shell's language. */
-    label: MessageLike;
+    /** Human-readable label for layout pickers, in the language it was read in. */
+    label: string;
     /** Column track weights (`fr` units), left to right. */
     cols: number[];
     /** Row track weights, top to bottom. */
@@ -44,25 +45,46 @@ import { svg16 } from '../core/icons';
 
 export type { TrackSizes } from '../state/document';
 
+/** What {@link registerLayout} takes: a definition whose label may be a message
+ *  (`msg()`), read in each picker's language. */
+export type LayoutRegistration = Omit<LayoutDefinition, 'label'> & { label: MessageLike };
+
+/** Registered layouts, labelled in English (a plain-string label as given). */
 const registry = new Map<string, LayoutDefinition>();
+/** Each registered layout's label as registered — a message reads per language. */
+const labels = new Map<string, MessageLike>();
 
 /** Register (or replace) a workspace layout. Pickers read the registry live. */
-export function registerLayout(def: LayoutDefinition): void {
-    registry.set(def.id, def);
+export function registerLayout(def: LayoutRegistration): void {
+    // A plain-string label is kept as given: the registered object is what reads come back as.
+    registry.set(def.id, typeof def.label === 'string' ? (def as LayoutDefinition) : { ...def, label: sourceText(def.label) });
+    labels.set(def.id, def.label);
 }
 
 export function unregisterLayout(id: string): void {
     registry.delete(id);
+    labels.delete(id);
 }
 
-/** The definition behind a layout id (undefined for unknown ids). */
-export function layoutDefinition(id: string): LayoutDefinition | undefined {
-    return registry.get(id);
+/** `def` labelled in `i18n`'s language — the same object when the label reads the same. */
+function inLanguage(def: LayoutDefinition, i18n: Translator | null | undefined): LayoutDefinition {
+    const grid = GRID_ID_RE.exec(def.id);
+    const message = labels.get(def.id) ?? (grid ? gridLabel(Number(grid[1]), Number(grid[2])) : def.label);
+    const label = textOf(i18n, message);
+    return label === def.label ? def : { ...def, label };
 }
 
-/** Every registered layout (registration order) — drives layout pickers. */
-export function layouts(): LayoutDefinition[] {
-    return [...registry.values()];
+/** The definition behind a layout id (undefined for unknown ids), labelled in `i18n`'s
+ *  language (English without one). Read it again after `locale:changed`. */
+export function layoutDefinition(id: string, i18n?: Translator | null): LayoutDefinition | undefined {
+    const def = registry.get(id);
+    return def && inLanguage(def, i18n);
+}
+
+/** Every registered layout (registration order), labelled in `i18n`'s language (English
+ *  without one) — drives layout pickers. Read it again after `locale:changed`. */
+export function layouts(i18n?: Translator | null): LayoutDefinition[] {
+    return [...registry.values()].map((def) => inLanguage(def, i18n));
 }
 
 /** Canonical slot ids `c1`…`cN`. */
@@ -101,6 +123,11 @@ const GRID_BUILTIN_IDS: Record<string, string> = {
 
 const GRID_LABEL = msg('workspace.layout.grid', '{cols} × {rows} grid');
 
+/** A synthesized grid's name, width first ("3 × 2" = 3 wide, 2 tall), like the picker's caption. */
+function gridLabel(rows: number, cols: number): MessageLike {
+    return withValues(GRID_LABEL, { cols, rows });
+}
+
 const clampTrack = (n: number): number => Math.max(1, Math.min(GRID_PICKER_MAX, Math.round(n)));
 
 /**
@@ -108,16 +135,15 @@ const clampTrack = (n: number): number => Math.max(1, Math.min(GRID_PICKER_MAX, 
  * picker canvas. Geometry matching a registered classic preset returns that preset
  * (id `'4'`, `'2h'`, …); anything else synthesizes a `g<rows>x<cols>` definition.
  */
-export function layoutForGrid(rows: number, cols: number): LayoutDefinition {
+export function layoutForGrid(rows: number, cols: number, i18n?: Translator | null): LayoutDefinition {
     const r = clampTrack(rows);
     const c = clampTrack(cols);
     const builtin = GRID_BUILTIN_IDS[`${r}x${c}`];
     const registered = builtin ? registry.get(builtin) : undefined;
-    if (registered) return registered;
+    if (registered) return inLanguage(registered, i18n);
     return {
         id: `g${r}x${c}`,
-        // Width-first label — matches the picker's caption ("3 × 2" = 3 wide, 2 tall).
-        label: withValues(GRID_LABEL, { cols: c, rows: r }),
+        label: textOf(i18n, gridLabel(r, c)),
         cols: Array.from({ length: c }, () => 1),
         rows: Array.from({ length: r }, () => 1),
         cells: slots(r * c),

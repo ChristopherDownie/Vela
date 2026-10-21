@@ -1,6 +1,7 @@
 import { msg } from '../i18n/message';
 import type { DrawingTypeKey } from './Drawing';
-import type { MessageLike } from '../i18n/types';
+import { textOf } from '../i18n/text';
+import type { MessageLike, Translator } from '../i18n/types';
 import { drawingTypeEntries, drawingTypeEntry } from './registry';
 
 /**
@@ -11,21 +12,21 @@ import { drawingTypeEntries, drawingTypeEntry } from './registry';
  */
 export interface ToolDefinition {
     type: DrawingTypeKey;
-    /** The tool's name; a message reads in the chart's language. */
-    label: MessageLike;
+    /** The tool's name, in the language the definition was built for. */
+    label: string;
     /** Inline SVG markup (no DOM). */
     icon: string;
 }
 
 /** A labelled subsection inside a toolbar group's flyout (e.g. "Fibonacci" within Fibonacci & Gann). */
 export interface ToolSection {
-    label: MessageLike;
+    label: string;
     tools: ToolDefinition[];
 }
 
 export interface ToolGroup {
     id: string;
-    label: MessageLike;
+    label: string;
     tools: ToolDefinition[];
     /** When set, the flyout renders non-clickable headers between sections. */
     sections?: ToolSection[];
@@ -33,6 +34,15 @@ export interface ToolGroup {
 
 export interface ToolbarDefinition {
     groups: ToolGroup[];
+}
+
+/** A toolbar whose labels are still messages: what the chart keeps, and reads in its
+ *  language whenever it hands the toolbar out ({@link resolveToolbar}). */
+type ToolSource = Omit<ToolDefinition, 'label'> & { label: MessageLike };
+type ToolSectionSource = { label: MessageLike; tools: ToolSource[] };
+type ToolGroupSource = Omit<ToolGroup, 'label' | 'tools' | 'sections'> & { label: MessageLike; tools: ToolSource[]; sections?: ToolSectionSource[] };
+export interface ToolbarSource {
+    groups: ToolGroupSource[];
 }
 
 /** A developer-supplied explicit group (just type keys; the registry fills the rest). */
@@ -154,15 +164,15 @@ const TOOLBAR_LAYOUT: readonly ToolbarGroupLayout[] = [
     },
 ];
 
-/** Resolve a type key to a {@link ToolDefinition}, or null if unregistered. */
-function toolFor(type: DrawingTypeKey): ToolDefinition | null {
+/** Resolve a type key to a {@link ToolSource}, or null if unregistered. */
+function toolFor(type: DrawingTypeKey): ToolSource | null {
     const meta = drawingTypeEntry(type);
     return meta ? { type: meta.type, label: meta.label, icon: meta.icon } : null;
 }
 
 /** Index registered tools by their declared registry group (registration order preserved). */
-function toolsByRegistryGroup(allowed?: ReadonlySet<DrawingTypeKey>): Map<string, ToolDefinition[]> {
-    const byGroup = new Map<string, ToolDefinition[]>();
+function toolsByRegistryGroup(allowed?: ReadonlySet<DrawingTypeKey>): Map<string, ToolSource[]> {
+    const byGroup = new Map<string, ToolSource[]>();
     for (const meta of drawingTypeEntries()) {
         if (allowed && !allowed.has(meta.type)) continue;
         const tool = { type: meta.type, label: meta.label, icon: meta.icon };
@@ -172,23 +182,23 @@ function toolsByRegistryGroup(allowed?: ReadonlySet<DrawingTypeKey>): Map<string
     return byGroup;
 }
 
-function resolveSection(source: SectionSource, byGroup: Map<string, ToolDefinition[]>, toolMap: Map<DrawingTypeKey, ToolDefinition>): ToolDefinition[] {
+function resolveSection(source: SectionSource, byGroup: Map<string, ToolSource[]>, toolMap: Map<DrawingTypeKey, ToolSource>): ToolSource[] {
     if ('registryGroup' in source) return byGroup.get(source.registryGroup) ?? [];
-    return source.types.map((type) => toolMap.get(type)).filter((t): t is ToolDefinition => t != null);
+    return source.types.map((type) => toolMap.get(type)).filter((t): t is ToolSource => t != null);
 }
 
 /** Build the canonical seven-group toolbar, optionally restricted to a type subset. */
-function assembleToolbar(allowed?: ReadonlySet<DrawingTypeKey>): ToolbarDefinition {
+function assembleToolbar(allowed?: ReadonlySet<DrawingTypeKey>): ToolbarSource {
     const byGroup = toolsByRegistryGroup(allowed);
-    const toolMap = new Map<DrawingTypeKey, ToolDefinition>();
+    const toolMap = new Map<DrawingTypeKey, ToolSource>();
     for (const tools of byGroup.values()) {
         for (const tool of tools) toolMap.set(tool.type, tool);
     }
 
-    const groups: ToolGroup[] = [];
+    const groups: ToolGroupSource[] = [];
     for (const layout of TOOLBAR_LAYOUT) {
-        const sections: ToolSection[] = [];
-        const flat: ToolDefinition[] = [];
+        const sections: ToolSectionSource[] = [];
+        const flat: ToolSource[] = [];
         for (const source of layout.sections) {
             const tools = resolveSection(source, byGroup, toolMap);
             if (tools.length === 0) continue;
@@ -207,7 +217,7 @@ function assembleToolbar(allowed?: ReadonlySet<DrawingTypeKey>): ToolbarDefiniti
 }
 
 /** Group a flat list of type keys into the canonical seven-group layout (drops unregistered types). */
-function groupTools(tools: readonly DrawingTypeKey[]): ToolbarDefinition {
+function groupTools(tools: readonly DrawingTypeKey[]): ToolbarSource {
     const allowed = new Set<DrawingTypeKey>();
     for (const type of tools) {
         if (drawingTypeEntry(type)) allowed.add(type);
@@ -216,18 +226,41 @@ function groupTools(tools: readonly DrawingTypeKey[]): ToolbarDefinition {
 }
 
 /** Build explicit groups from developer config (drops unregistered/empty entries). */
-function resolveGroups(groups: readonly ToolbarGroupConfig[]): ToolbarDefinition {
-    const out: ToolGroup[] = [];
+function resolveGroups(groups: readonly ToolbarGroupConfig[]): ToolbarSource {
+    const out: ToolGroupSource[] = [];
     for (const g of groups) {
-        const tools = g.tools.map(toolFor).filter((t): t is ToolDefinition => t != null);
+        const tools = g.tools.map(toolFor).filter((t): t is ToolSource => t != null);
         if (tools.length > 0) out.push({ id: g.id, label: g.label, tools });
     }
     return { groups: out };
 }
 
-/** The default toolbar — every registered type, grouped into the canonical seven-button layout. */
-export function defaultToolbar(): ToolbarDefinition {
-    return assembleToolbar();
+/** The toolbar with every label read in `i18n`'s language (English without one). A tool
+ *  listed both in its group and in a section stays one object. */
+export function resolveToolbar(source: ToolbarSource, i18n?: Translator | null): ToolbarDefinition {
+    const tools = new Map<ToolSource, ToolDefinition>();
+    const tool = (t: ToolSource): ToolDefinition => {
+        let out = tools.get(t);
+        if (!out) {
+            out = { type: t.type, label: textOf(i18n, t.label), icon: t.icon };
+            tools.set(t, out);
+        }
+        return out;
+    };
+    return {
+        groups: source.groups.map((g) => ({
+            id: g.id,
+            label: textOf(i18n, g.label),
+            tools: g.tools.map(tool),
+            sections: g.sections?.map((s) => ({ label: textOf(i18n, s.label), tools: s.tools.map(tool) })),
+        })),
+    };
+}
+
+/** The default toolbar — every registered type, grouped into the canonical seven-button
+ *  layout, labelled in `i18n`'s language (English without one). */
+export function defaultToolbar(i18n?: Translator | null): ToolbarDefinition {
+    return resolveToolbar(assembleToolbar(), i18n);
 }
 
 /**
@@ -235,11 +268,17 @@ export function defaultToolbar(): ToolbarDefinition {
  * Default (undefined) ⇒ toolbar VISIBLE; `false` ⇒ subsystem available but toolbar hidden
  * (headless use still works via `chart.drawings.add(...)`); object ⇒ `toolbar ?? true`.
  */
-export function buildToolbar(option: DrawingsOption | undefined): { definition: ToolbarDefinition; visible: boolean } {
-    if (option === false) return { definition: defaultToolbar(), visible: false };
-    if (option === undefined || option === true) return { definition: defaultToolbar(), visible: true };
+export function buildToolbar(option: DrawingsOption | undefined, i18n?: Translator | null): { definition: ToolbarDefinition; visible: boolean } {
+    const { definition, visible } = toolbarSource(option);
+    return { definition: resolveToolbar(definition, i18n), visible };
+}
+
+/** {@link buildToolbar} with the labels still messages, for a chart to read in its language. */
+export function toolbarSource(option: DrawingsOption | undefined): { definition: ToolbarSource; visible: boolean } {
+    if (option === false) return { definition: assembleToolbar(), visible: false };
+    if (option === undefined || option === true) return { definition: assembleToolbar(), visible: true };
     const visible = option.toolbar ?? true;
     if (option.groups) return { definition: resolveGroups(option.groups), visible };
     if (option.tools) return { definition: groupTools(option.tools), visible };
-    return { definition: defaultToolbar(), visible };
+    return { definition: assembleToolbar(), visible };
 }

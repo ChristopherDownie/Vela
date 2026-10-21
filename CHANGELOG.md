@@ -29,14 +29,11 @@ All notable changes to Vela, newest first.
   clock format their numbers for the locale. Saved layouts keep their values in English, so
   a layout opens the same in every language. The labels you contribute (actions, side
   panels, legend actions and callouts, layouts, key bindings, indicator inputs) accept
-  messages too.
+  messages too, while what you read back, such as `buildToolbar()` and `layouts()`, stays
+  plain text in the language of the translator you pass.
 
 ### Changed
 
-- **Some labels you read back can be messages.** The labels in a drawing toolbar definition
-  (`buildToolbar()`) and the label of a registered layout (`layoutDefinition()`,
-  `layouts()`) are now plain text or a message object. _(Breaking for TypeScript code that
-  treats these labels as strings: resolve them with `chart.i18n.t(label)`.)_
 - **The English-only formatting helpers are deprecated.** `fmtPrice` and `fmtChange` from
   `@luxalgo/vela/widget`, and the date picker's `MONTH_LABELS` and `WEEKDAY_LABELS` from
   `@luxalgo/vela/ui`, keep working and keep returning English. Format through a chart's
