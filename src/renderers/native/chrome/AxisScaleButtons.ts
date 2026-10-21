@@ -1,3 +1,6 @@
+import { msg } from '../../../core/i18n/message';
+import { textOf } from '../../../core/i18n/text';
+import type { MessageLike, Translator } from '../../../core/i18n/types';
 import type { VelaTheme } from '../../../core/options';
 import { attachChromeTooltip } from '../../shared/chrome-tooltip';
 import { AXIS_MASTER_W } from './axisLayout';
@@ -19,7 +22,14 @@ export interface AxisScaleButtonsDeps {
     rightAxis(): number;
     onToggleAuto(paneId: string): void;
     onToggleLog(paneId: string): void;
+    /** The chart's translator (button tooltips). Absent: English. */
+    i18n?(): Translator;
 }
+
+const TEXT = {
+    auto: msg('chart.axisButtons.auto', 'Auto (fits data to screen)'),
+    log: msg('chart.axisButtons.log', 'Logarithmic scale'),
+};
 
 const STYLE_ID = 'vela-axis-scale-buttons';
 
@@ -80,8 +90,8 @@ export class AxisScaleButtons {
             pointerEvents: 'auto',
         });
         this.applyTheme();
-        this.autoBtn = this.button('A', 'Auto (fits data to screen)', () => this.deps.onToggleAuto(this.hoverPaneId ?? ''));
-        this.logBtn = this.button('L', 'Logarithmic scale', () => this.deps.onToggleLog(this.hoverPaneId ?? ''));
+        this.autoBtn = this.button('A', TEXT.auto, () => this.deps.onToggleAuto(this.hoverPaneId ?? ''));
+        this.logBtn = this.button('L', TEXT.log, () => this.deps.onToggleLog(this.hoverPaneId ?? ''));
         this.cluster.append(this.autoBtn, this.logBtn);
         this.plot.appendChild(this.cluster);
         // Track hover on the PLOT so moving the cursor onto the buttons themselves — plot
@@ -90,17 +100,27 @@ export class AxisScaleButtons {
         this.plot.addEventListener('pointerleave', this.onPlotLeave);
     }
 
-    private button(label: string, title: string, onClick: () => void): HTMLButtonElement {
+    private t(m: MessageLike): string {
+        return textOf(this.deps.i18n?.() ?? null, m);
+    }
+
+    /** Re-read the buttons' labels in the current language (tooltips read it live). */
+    relabel(): void {
+        this.autoBtn.setAttribute('aria-label', this.t(TEXT.auto));
+        this.logBtn.setAttribute('aria-label', this.t(TEXT.log));
+    }
+
+    private button(label: string, title: MessageLike, onClick: () => void): HTMLButtonElement {
         const b = document.createElement('button');
         b.type = 'button';
-        b.setAttribute('aria-label', title); // not `title` — native tooltips are banned on renderer chrome
+        b.setAttribute('aria-label', this.t(title)); // not `title` — native tooltips are banned on renderer chrome
         b.textContent = label;
         b.className = 'vela-axis-btn';
         Object.assign(b.style, { width: `${BTN_PX}px`, height: `${BTN_PX}px` });
         this.tipDisposers.push(attachChromeTooltip(b, {
             host: this.plot,
             theme: () => this.theme,
-            text: () => title,
+            text: () => this.t(title),
             placement: 'above',
         }));
         b.addEventListener('click', (e) => {

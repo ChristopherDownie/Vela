@@ -1,3 +1,4 @@
+import type { Translator } from '../../../core/i18n/types';
 import type { VelaTheme } from '../../../core/options';
 import type { IndicatorModel } from '../../../core/model/indicator';
 import type { OHLCV } from '../../../core/model/ohlcv';
@@ -79,9 +80,9 @@ export class ChromeRenderer {
     }
 
     /** Hover text of the mark glyph under a plot point, or null. */
-    markTooltipAt(x: number, y: number, groups: ReadonlyArray<{ id: string; label: string }>): string | null {
+    markTooltipAt(x: number, y: number, groups: ReadonlyArray<{ id: string; label: string }>, i18n?: Translator | null): string | null {
         const g = this.markGlyphAt(x, y);
-        return g ? clusterTooltip(g.cluster, groups) : null;
+        return g ? clusterTooltip(g.cluster, groups, i18n) : null;
     }
 
     /** Wire the drawing coordinate resolvers + theme (call once per frame before use). */

@@ -4,6 +4,9 @@
 // ONLY if they display an equivalent visible attribution elsewhere in their UI, which the
 // same file also allows them to restyle or reposition to fit their design.
 
+import { msg } from '../../../core/i18n/message';
+import { textOf } from '../../../core/i18n/text';
+import type { Translator } from '../../../core/i18n/types';
 import { isDarkColor } from '../../../core/color';
 import { VELA_LETTERS_SVG, VELA_MARK_SVG } from './vela-logos';
 
@@ -121,16 +124,20 @@ export function createCustomMark(doc: Document, html: string, background: string
     return el;
 }
 
+/** The mark's tooltip; Vela's name is never translated. */
+const ATTRIBUTION_LABEL = msg('chart.attribution', 'Charting by Vela');
+
 /** Build the mark element (an anchor; the caller owns absolute positioning). */
-export function createAttributionMark(doc: Document, background: string): HTMLAnchorElement {
+export function createAttributionMark(doc: Document, background: string, i18n?: Translator | null): HTMLAnchorElement {
     ensureStyles(doc);
     const a = doc.createElement('a');
     a.className = 'vela-attribution';
     a.href = ATTRIBUTION_URL;
     a.target = '_blank';
     a.rel = 'noopener';
-    a.title = 'Charting by Vela';
-    a.setAttribute('aria-label', 'Charting by Vela');
+    const label = textOf(i18n, ATTRIBUTION_LABEL);
+    a.title = label;
+    a.setAttribute('aria-label', label);
     Object.assign(a.style, {
         position: 'absolute',
         zIndex: '6',

@@ -8,6 +8,7 @@ export type {
     MessageDescriptor,
     MessageLike,
     MessageValues,
+    MessageArgs,
     LocalePack,
     VelaMessageCatalog,
     VelaMessageId,

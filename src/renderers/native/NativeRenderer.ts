@@ -1074,7 +1074,7 @@ export class NativeRenderer implements IChartRenderer {
                 this.plot.appendChild(this.settingsButton);
             }
             if (this.settingsButton) this.settingsButton.style.display = 'flex';
-            if (this.plot && !this.settingsDialog) this.settingsDialog = new SettingsDialog(this.dialogHost ?? this.plot, this.theme);
+            if (this.plot && !this.settingsDialog) this.settingsDialog = new SettingsDialog(this.dialogHost ?? this.plot, this.theme, () => this.i18n ?? englishTranslator());
         } else {
             this.settingsButton?.style.setProperty('display', 'none');
             this.settingsDialog?.close();
@@ -1117,7 +1117,7 @@ export class NativeRenderer implements IChartRenderer {
      *  in-chart gear — created on demand, independent of the gear feature being enabled. */
     openSettingsDialog(section?: string): void {
         if (!this.settingsDialog && this.plot) {
-            this.settingsDialog = new SettingsDialog(this.dialogHost ?? this.plot, this.theme);
+            this.settingsDialog = new SettingsDialog(this.dialogHost ?? this.plot, this.theme, () => this.i18n ?? englishTranslator());
             this.settingsDialog.setLayoutMode(this.layoutMode);
         }
         this.toggleSettingsDialog(section);
@@ -1599,10 +1599,11 @@ export class NativeRenderer implements IChartRenderer {
         // The hit-rects are collected by the slice prepainter (drawings paint there now).
         this.labelTooltip = new LabelTooltip(this.plot, {
             theme: () => this.chromeTheme(),
-            lookup: (x, y) => this.indicatorSlices.labelTooltipAt(x, y) ?? this.chrome.markTooltipAt(x, y, this.markGroupsInUse()),
+            lookup: (x, y) => this.indicatorSlices.labelTooltipAt(x, y) ?? this.chrome.markTooltipAt(x, y, this.markGroupsInUse(), this.i18n),
         });
         // Timeline-mark popup, plus the chrome repaint a lane icon asks for once it has rasterized.
         this.markPopover = new MarkPopover({
+            i18n: () => this.i18n ?? englishTranslator(),
             plot: this.plot,
             host: () => this.dialogHost ?? this.plot,
             theme: () => this.chromeTheme(),
@@ -1713,6 +1714,7 @@ export class NativeRenderer implements IChartRenderer {
         });
 
         this.paneControls = new PaneControls(this.plot, theme, {
+            i18n: () => this.i18n ?? englishTranslator(),
             panes: () => this.paneControlViews(),
             rightAxis: () => this.rightAxisW,
             onMove: (paneId, dir) => this.movePaneLocal(paneId, dir),
@@ -1735,6 +1737,7 @@ export class NativeRenderer implements IChartRenderer {
         this.paneControls.setSuspended(this.layoutMode === 'mobile');
 
         this.axisScaleButtons = new AxisScaleButtons(this.plot, theme, {
+            i18n: () => this.i18n ?? englishTranslator(),
             panes: () => this.axisScaleViews(),
             rightAxis: () => this.rightAxisW,
             onToggleAuto: (paneId) => this.togglePaneAuto(paneId),
@@ -1872,6 +1875,7 @@ export class NativeRenderer implements IChartRenderer {
         this.applyRootAttributes();
         this.relabel();
         this.userDrawings?.relocalize();
+        this.settingsDialog?.relocalize();
         if (this.scheduler) this.scheduler.invalidate(InvalidateLevel.Full);
     }
 
@@ -1905,6 +1909,9 @@ export class NativeRenderer implements IChartRenderer {
             this.scrollButton.setAttribute('aria-label', this.t(TEXT.scrollToLatest));
         }
         if (this.keyboardEnabled && this.dataCanvas?.hasAttribute('aria-label')) this.dataCanvas.setAttribute('aria-label', this.t(TEXT.keyboardHelp));
+        this.paneControls?.refresh();
+        this.axisScaleButtons?.relabel();
+        if (this.attributionEl && this.attributionHtml === null) this.rebuildAttribution();
         if (this.inputsUI) {
             for (const model of this.scene.indicators.values()) {
                 if (model.legend !== false) this.inputsUI.setTitle(model.id, this.legendTitle(model));
@@ -4352,7 +4359,7 @@ export class NativeRenderer implements IChartRenderer {
     private buildAttributionEl(): HTMLElement {
         return this.attributionHtml !== null
             ? createCustomMark(document, this.attributionHtml, this.theme.background)
-            : createAttributionMark(document, this.theme.background);
+            : createAttributionMark(document, this.theme.background, this.i18n);
     }
 
     /** Swap the mark in place — the content kind changed (built-in ↔ host-supplied). */

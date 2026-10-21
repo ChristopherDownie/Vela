@@ -11,8 +11,12 @@ export interface MessageDescriptor {
     readonly defaultMessage: string;
     /** Values bound to the message's arguments (see `withValues`); values passed to `t()`
      *  take precedence. */
-    readonly values?: MessageValues;
+    readonly values?: MessageArgs;
 }
+
+/** Values a message's arguments take: text, numbers, or messages, which are translated
+ *  first (`withValues(MOVE_TO, { pane: msg('…', 'Main chart') })`). */
+export type MessageArgs = Readonly<Record<string, string | number | MessageDescriptor>>;
 
 /** Display text: a plain string renders verbatim (untranslated); a descriptor is translated. */
 export type MessageLike = string | MessageDescriptor;
@@ -95,7 +99,7 @@ export interface Translator {
      * fallbacks (`pt-BR` → `pt` → `en`), then its English `defaultMessage`, and is
      * formatted with `values`. Never throws: a malformed translation falls back to English.
      */
-    t(message: MessageLike, values?: MessageValues): string;
+    t(message: MessageLike, values?: MessageArgs): string;
     /** The chart's resolved formatters. */
     readonly format: ResolvedFormatters;
 }

@@ -7,7 +7,7 @@ import type { FormatSettings, ResolvedFormatters } from '../format/types';
 import { formatMessage, type MessageValues } from './icu';
 import { canonicalLocale, fallbackChain, languageOf, localeDirection, resolveNumberingSystem } from './locale';
 import { messagesFor } from './registry';
-import type { LocalizationOptions, MessageLike, TextDirection, Translator } from './types';
+import type { LocalizationOptions, MessageArgs, MessageLike, TextDirection, Translator } from './types';
 
 /** True for a {@link MessageDescriptor}-shaped value. */
 export function isMessageDescriptor(m: unknown): m is { id: string; defaultMessage: string } {
@@ -25,6 +25,20 @@ export function pickLocalization(options: LocalizationOptions): LocalizationOpti
 }
 
 let warnedSyntax = false;
+
+/** Message arguments with nested messages resolved through `resolve` (null when none). */
+export function resolveArgs(args: MessageArgs | undefined, resolve: (m: MessageLike) => string): MessageValues | undefined {
+    if (!args) return undefined;
+    let out: Record<string, string | number> | null = null;
+    for (const key of Object.keys(args)) {
+        const v = args[key]!;
+        if (typeof v === 'object' && v !== null) {
+            out ??= { ...(args as Record<string, string | number>) };
+            out[key] = resolve(v);
+        }
+    }
+    return out ?? (args as MessageValues);
+}
 
 /** The concrete translator. Hosts receive it as {@link Translator}. */
 export class LocaleState implements Translator {
@@ -112,12 +126,12 @@ export class LocaleState implements Translator {
         return this.settings;
     }
 
-    t(message: MessageLike, values?: MessageValues): string {
+    t(message: MessageLike, args?: MessageArgs): string {
         if (typeof message === 'string') return message;
         if (!isMessageDescriptor(message)) return message == null ? '' : String(message);
         const { id, defaultMessage } = message;
-        const bound = (message as { values?: MessageValues }).values;
-        if (bound) values = values ? { ...bound, ...values } : bound;
+        const bound = (message as { values?: MessageArgs }).values;
+        const values = resolveArgs(bound ? (args ? { ...bound, ...args } : bound) : args, (m) => this.t(m));
         const override = (this.opts.messages as Readonly<Record<string, string | undefined>> | undefined)?.[id];
         const source = typeof override === 'string' ? override : (messagesFor(this.chain).get(id) ?? defaultMessage);
         try {

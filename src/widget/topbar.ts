@@ -1,5 +1,8 @@
 // Topbar — symbol label, timeframe dropdown, and the price-style dropdown (built-ins +
 // every chart type registered through the plugin SDK, labels from the registry).
+import { priceStyleMessage } from '../chart-types/labels';
+import { textOf } from '../core/i18n/text';
+import type { Translator } from '../core/i18n/types';
 import { Menu, type MenuItemDescriptor } from '../ui/components/menu';
 import { Tooltip } from '../ui/components/tooltip';
 import { LayoutPicker, type LayoutPickerShape } from './layout-picker';
@@ -144,16 +147,9 @@ const CSS = `
 .vela-widget-action:hover { background: var(--vela-hover); }
 `;
 
-const BUILTIN_STYLE_LABELS: Record<string, string> = {
-    candles: 'Candles',
-    bars: 'Bars',
-    line: 'Line',
-    area: 'Area',
-    baseline: 'Baseline',
-};
-
-export function priceStyleLabel(id: string): string {
-    return chartType(id)?.label ?? BUILTIN_STYLE_LABELS[id] ?? id;
+/** A price style's name, in `i18n`'s language (English without one). */
+export function priceStyleLabel(id: string, i18n?: Translator | null): string {
+    return textOf(i18n, priceStyleMessage(id));
 }
 
 /** Icon id for a price style — registers a plugin type's `icon` markup on first use. */

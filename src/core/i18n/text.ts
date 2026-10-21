@@ -3,9 +3,9 @@
 // titles) reads its English source text, which no locale pack or override can change.
 import { ENGLISH_SETTINGS } from '../format/formatters';
 import { formatMessageNumber, localizeAscii } from '../format/numbers';
-import { formatMessage, type MessageValues } from './icu';
-import { englishTranslator, formatSettingsOf, isMessageDescriptor } from './translator';
-import type { MessageLike, Translator } from './types';
+import { formatMessage } from './icu';
+import { englishTranslator, formatSettingsOf, isMessageDescriptor, resolveArgs } from './translator';
+import type { MessageArgs, MessageLike, Translator } from './types';
 
 const ENGLISH_RUNTIME = {
     locale: 'en',
@@ -16,12 +16,12 @@ const ENGLISH_RUNTIME = {
  * The English source text of display text, with its bound values: what identities key on.
  * Registered packs and `messages` overrides never change it. A plain string comes back as is.
  */
-export function sourceText(message: MessageLike | null | undefined, values?: MessageValues): string {
+export function sourceText(message: MessageLike | null | undefined, values?: MessageArgs): string {
     if (message == null) return '';
     if (typeof message === 'string') return message;
     if (!isMessageDescriptor(message)) return String(message);
     const bound = message.values;
-    const all = bound ? (values ? { ...bound, ...values } : bound) : values;
+    const all = resolveArgs(bound ? (values ? { ...bound, ...values } : bound) : values, (m) => sourceText(m));
     try {
         return formatMessage(message.defaultMessage, all, ENGLISH_RUNTIME);
     } catch {
@@ -30,7 +30,7 @@ export function sourceText(message: MessageLike | null | undefined, values?: Mes
 }
 
 /** Display text through `i18n`, or in English when no translator is at hand. */
-export function textOf(i18n: Translator | null | undefined, message: MessageLike, values?: MessageValues): string {
+export function textOf(i18n: Translator | null | undefined, message: MessageLike, values?: MessageArgs): string {
     return (i18n ?? englishTranslator()).t(message, values);
 }
 

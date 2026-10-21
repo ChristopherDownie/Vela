@@ -29,6 +29,7 @@ export {
     type MessageDescriptor,
     type MessageLike,
     type MessageValues,
+    type MessageArgs,
     type LocalePack,
     type VelaMessageCatalog,
     type VelaMessageId,
