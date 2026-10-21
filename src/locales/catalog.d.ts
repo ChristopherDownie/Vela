@@ -8,7 +8,9 @@ export interface VelaCoreMessageCatalog {
     'chart.a11y.valueSummary': string;
     'chart.attribution': string;
     'chart.axisButtons.auto': string;
+    'chart.axisButtons.autoLetter': string;
     'chart.axisButtons.log': string;
+    'chart.axisButtons.logLetter': string;
     'chart.indicatorSettings.cancel': string;
     'chart.indicatorSettings.close': string;
     'chart.indicatorSettings.inputsTab': string;

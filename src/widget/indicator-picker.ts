@@ -152,8 +152,7 @@ export class IndicatorPicker {
                 this.isOpen = open;
                 if (open) {
                     this.search.value = '';
-                    this.dialog.titleEl.textContent = this.t(TEXT.title);
-                    this.search.placeholder = this.t(TEXT.search);
+                    this.relabel();
                     this.refresh();
                     // Desktop only: focusing the search on a touch device would pop the
                     // on-screen keyboard over the just-opened fullscreen picker.
@@ -177,6 +176,12 @@ export class IndicatorPicker {
 
     open(): void {
         this.dialog.show();
+    }
+
+    /** The dialog's fixed text in the shell's language, re-read on every open. */
+    relabel(): void {
+        this.dialog.titleEl.textContent = this.t(TEXT.title);
+        this.search.placeholder = this.t(TEXT.search);
     }
 
     private t(text: MessageLike, values?: MessageArgs): string {

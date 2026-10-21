@@ -127,6 +127,14 @@ export function createCustomMark(doc: Document, html: string, background: string
 /** The mark's tooltip; Vela's name is never translated. */
 const ATTRIBUTION_LABEL = msg('chart.attribution', 'Charting by Vela');
 
+/** Re-read the built-in mark's tooltip in `i18n`'s language; a host's own mark keeps its words. */
+export function relabelAttributionMark(el: HTMLElement, i18n?: Translator | null): void {
+    if (!el.classList.contains('vela-attribution')) return;
+    const label = textOf(i18n, ATTRIBUTION_LABEL);
+    el.title = label;
+    el.setAttribute('aria-label', label);
+}
+
 /** Build the mark element (an anchor; the caller owns absolute positioning). */
 export function createAttributionMark(doc: Document, background: string, i18n?: Translator | null): HTMLAnchorElement {
     ensureStyles(doc);

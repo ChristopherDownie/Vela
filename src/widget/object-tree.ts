@@ -10,6 +10,7 @@
 // chart, hands it over, and paints the result. Kept in sync via the chart's event bus, and
 // rebound to each new chart instance after a widget rebuild.
 import { msg } from '../core/i18n/message';
+import { sliceGraphemes } from '../core/i18n/text';
 import type { Translator } from '../core/i18n/types';
 import type { Vela } from '../Vela';
 import type { IndicatorHandle } from '../core/IndicatorHandle';
@@ -684,7 +685,8 @@ export class ObjectTree extends SidePanel {
         const { chart } = pass;
         if (row.kind === 'price') {
             const base = this.symbolName.replace(/[-_/]?(USDT|USDC|USD1|USDS|BUSD|USD|EUR|PERP)$/i, '') || this.symbolName;
-            const icon = tickerIconEl(doc, base || 'P', this.symbolName || this.t(TEXT.price), 'vela-ot-avatar', this.symbolRaw ? this.iconFor?.(this.symbolRaw) : undefined);
+            // Without a symbol the badge shows the first letter of "Price" in the panel's language.
+            const icon = tickerIconEl(doc, base || sliceGraphemes(this.t(TEXT.price), 1), this.symbolName || this.t(TEXT.price), 'vela-ot-avatar', this.symbolRaw ? this.iconFor?.(this.symbolRaw) : undefined);
             const el = this.row(icon, row.label, row.visible, [
                 {
                     icon: row.visible ? 'eye' : 'eye-off',

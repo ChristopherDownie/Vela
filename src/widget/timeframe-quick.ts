@@ -88,8 +88,13 @@ export class TimeframeQuick {
         });
     }
 
-    open(seed = ''): void {
+    /** The dialog's title in the shell's language, re-read on every open. */
+    relabel(): void {
         this.dialog.titleEl.textContent = this.t(TEXT.title);
+    }
+
+    open(seed = ''): void {
+        this.relabel();
         this.dialog.show();
         this.input.value = seed.toUpperCase();
         this.renderHint();

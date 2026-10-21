@@ -29,6 +29,10 @@ export interface AxisScaleButtonsDeps {
 const TEXT = {
     auto: msg('chart.axisButtons.auto', 'Auto (fits data to screen)'),
     log: msg('chart.axisButtons.log', 'Logarithmic scale'),
+    /** The auto button's letter: the first of "Auto". */
+    autoLetter: msg('chart.axisButtons.autoLetter', 'A'),
+    /** The log button's letter: the first of "Logarithmic". */
+    logLetter: msg('chart.axisButtons.logLetter', 'L'),
 };
 
 const STYLE_ID = 'vela-axis-scale-buttons';
@@ -90,8 +94,8 @@ export class AxisScaleButtons {
             pointerEvents: 'auto',
         });
         this.applyTheme();
-        this.autoBtn = this.button('A', TEXT.auto, () => this.deps.onToggleAuto(this.hoverPaneId ?? ''));
-        this.logBtn = this.button('L', TEXT.log, () => this.deps.onToggleLog(this.hoverPaneId ?? ''));
+        this.autoBtn = this.button(TEXT.autoLetter, TEXT.auto, () => this.deps.onToggleAuto(this.hoverPaneId ?? ''));
+        this.logBtn = this.button(TEXT.logLetter, TEXT.log, () => this.deps.onToggleLog(this.hoverPaneId ?? ''));
         this.cluster.append(this.autoBtn, this.logBtn);
         this.plot.appendChild(this.cluster);
         // Track hover on the PLOT so moving the cursor onto the buttons themselves — plot
@@ -108,13 +112,15 @@ export class AxisScaleButtons {
     relabel(): void {
         this.autoBtn.setAttribute('aria-label', this.t(TEXT.auto));
         this.logBtn.setAttribute('aria-label', this.t(TEXT.log));
+        this.autoBtn.textContent = this.t(TEXT.autoLetter);
+        this.logBtn.textContent = this.t(TEXT.logLetter);
     }
 
-    private button(label: string, title: MessageLike, onClick: () => void): HTMLButtonElement {
+    private button(label: MessageLike, title: MessageLike, onClick: () => void): HTMLButtonElement {
         const b = document.createElement('button');
         b.type = 'button';
         b.setAttribute('aria-label', this.t(title)); // not `title` — native tooltips are banned on renderer chrome
-        b.textContent = label;
+        b.textContent = this.t(label);
         b.className = 'vela-axis-btn';
         Object.assign(b.style, { width: `${BTN_PX}px`, height: `${BTN_PX}px` });
         this.tipDisposers.push(attachChromeTooltip(b, {

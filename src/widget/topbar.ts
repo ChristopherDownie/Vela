@@ -741,6 +741,7 @@ export class Topbar {
         if (this.layoutButton) this.renderLayoutButton(this.layoutButton.ownerDocument);
         this.tfMenu.setItems(this.tfItems());
         this.styleMenu.setItems(this.styleItems());
+        this.layoutPicker?.relabel();
         this.renderActions();
     }
 

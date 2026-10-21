@@ -50,7 +50,7 @@ import { DrawingPill } from '../widget/drawing-pill';
 import { priceStyleIds } from '../renderers/native/core/chartConfig';
 import { resolveIndicators, type IndicatorManifest, type ResolvedIndicator } from '../widget/indicators';
 import { DrawingToolbar } from '../renderers/native/drawings/DrawingToolbar';
-import { applyAttributionMarkTheme, createAttributionMark, createCustomMark } from '../renderers/native/chrome/AttributionMark';
+import { applyAttributionMarkTheme, createAttributionMark, createCustomMark, relabelAttributionMark } from '../renderers/native/chrome/AttributionMark';
 import { rendererDefaults } from '../core/renderer-defaults';
 import { buildToolbar, type DrawingTypeKey, type SerializedDrawing, type SnapMode, type ToolbarDefinition } from '../core/drawings';
 import { timeframeToMs } from '../data/timeframe';
@@ -688,7 +688,7 @@ export class VelaWorkspace {
             const mark =
                 typeof attribution === 'string' && attribution.trim()
                     ? createCustomMark(doc, attribution, background)
-                    : createAttributionMark(doc, background);
+                    : createAttributionMark(doc, background, this.localeState);
             Object.assign(mark.style, {
                 left: 'calc(var(--vela-toolbar-gutter, 0px) + 12px)',
                 bottom: `calc(var(--vela-bottom-gutter, ${TIME_AXIS_H}px) + 10px)`,
@@ -998,6 +998,9 @@ export class VelaWorkspace {
     /** Re-read the shared chrome in the current language. Dialogs, menus and drawers read
      *  it on their next open; what stays on screen is relabeled here. */
     private relocalizeChrome(): void {
+        this.symbolPicker.relabel();
+        this.indicatorPicker?.relabel();
+        this.tfQuick.relabel();
         this.topbar.relocalize();
         this.bottombar?.relocalize();
         this.mobileBar?.relocalize();
@@ -1005,6 +1008,7 @@ export class VelaWorkspace {
         this.drawToolbar?.relabel();
         this.drawToolbar?.setShortcuts(toolShortcutHints(this.keymap, this.localeState));
         this.drawingPill?.relocalize();
+        if (this.attributionMark) relabelAttributionMark(this.attributionMark, this.localeState);
     }
 
     /** `lang` once the host set a locale, `dir` once it set a direction; otherwise the

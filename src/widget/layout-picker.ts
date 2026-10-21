@@ -364,9 +364,10 @@ export class LayoutPicker {
     }
 
     /** Fixed text and square names in the current language. */
-    private relabel(): void {
+    relabel(): void {
         const i18n = this.opts.i18n;
         for (const { el, text } of this.fixedText) el.textContent = textOf(i18n, text);
+        this.infoTip.setContent(() => this.tipNode());
         for (const sq of this.squares) {
             const { r, c } = this.squarePos(sq);
             sq.setAttribute('aria-label', textOf(i18n, TEXT.gridSize, { cols: c + 1, rows: r + 1 }));

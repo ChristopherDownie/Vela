@@ -524,7 +524,7 @@ export class SymbolPicker {
     }
 
     /** The dialog's fixed text in the shell's language, re-read on every open. */
-    private relabel(): void {
+    relabel(): void {
         const i18n = this.opts.i18n;
         this.dialog.titleEl.textContent = textOf(i18n, TEXT.title);
         this.input.placeholder = textOf(i18n, TEXT.search);
