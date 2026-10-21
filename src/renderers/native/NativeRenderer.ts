@@ -21,6 +21,9 @@ import type {
 import type { VelaTheme } from '../../core/options';
 import type { Translator } from '../../core/i18n/types';
 import { englishTranslator } from '../../core/i18n/translator';
+import { msg } from '../../core/i18n/message';
+import { textOf } from '../../core/i18n/text';
+import type { MessageLike } from '../../core/i18n/types';
 import { ENGLISH_FORMAT } from '../../core/format/formatters';
 import type { FormatSurface } from '../../core/format/types';
 import type { OHLCV } from '../../core/model/ohlcv';
@@ -44,7 +47,7 @@ import {
 } from '../../core/options';
 import type { Unsubscribe } from '../../core/util/types';
 import { SecondClock, type WallClock } from '../../core/util/wall-clock';
-import { isLineLikeSeries, seriesShownOn, type SeriesSurface } from '../../core/model/series';
+import { isLineLikeSeries, seriesShownOn, type SeriesSpec, type SeriesSurface } from '../../core/model/series';
 import { InputsUI, type LegendPlotValue } from '../shared/InputsUI';
 import { PaneControls } from './chrome/PaneControls';
 import { AxisScaleButtons, type AxisScaleView } from './chrome/AxisScaleButtons';
@@ -165,6 +168,20 @@ const SEPARATOR_HIT_PX = 4;
  * pointer/wheel pan-zoom over a placeholder grid. Series/fills/drawings/axes/
  * crosshair/inputs land in P1–P2.
  */
+const TEXT = {
+    chartSettings: msg('chart.settingsButton', 'Chart settings'),
+    scrollToLatest: msg('chart.scrollToLatest.label', 'Scroll to most recent bar'),
+    scrollToLatestTitle: msg('chart.scrollToLatest.title', 'Scroll to most recent bar (Alt+Shift+→)'),
+    mainChart: msg('chart.pane.mainChart', 'Main chart'),
+    pane: msg('chart.pane.numbered', 'Pane {n}'),
+    keyboardHelp: msg(
+        'chart.a11y.keyboardHelp',
+        'Interactive price chart. Use Left/Right arrows to move between bars, Shift+Arrow to pan, plus/minus to zoom, Home/End to jump, 0 to reset.',
+    ),
+    barSummary: msg('chart.a11y.barSummary', 'Open {open}, High {high}, Low {low}, Close {close}'),
+    valueSummary: msg('chart.a11y.valueSummary', '{name} {value}'),
+};
+
 export class NativeRenderer implements IChartRenderer {
     readonly capabilities: RendererCapabilities = NATIVE_CAPABILITIES;
 
@@ -1067,7 +1084,7 @@ export class NativeRenderer implements IChartRenderer {
     private makeSettingsButton(): HTMLButtonElement {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.title = 'Chart settings';
+        btn.title = this.t(TEXT.chartSettings);
         btn.innerHTML = iconAt('gear', 14);
         Object.assign(btn.style, {
             position: 'absolute',
@@ -1170,8 +1187,8 @@ export class NativeRenderer implements IChartRenderer {
     private makeScrollToRealtimeButton(): HTMLButtonElement {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.title = 'Scroll to most recent bar (Alt+Shift+→)';
-        btn.setAttribute('aria-label', 'Scroll to most recent bar');
+        btn.title = this.t(TEXT.scrollToLatestTitle);
+        btn.setAttribute('aria-label', this.t(TEXT.scrollToLatest));
         btn.innerHTML = this.scrollButtonIcon();
         Object.assign(btn.style, {
             position: 'absolute',
@@ -1679,7 +1696,7 @@ export class NativeRenderer implements IChartRenderer {
                     kind: p.kind,
                     // A study pane is named after its master indicator ("Move to RSI"), not a
                     // positional "Pane N" (which shifts as panes reorder and means little).
-                    label: p.kind === 'price' ? 'Main chart' : this.paneMasterTitle(p.id) ?? `Pane ${i}`,
+                    label: p.kind === 'price' ? this.t(TEXT.mainChart) : (this.paneMasterTitle(p.id) ?? this.t(TEXT.pane, { n: i })),
                     top: p.bounds.top,
                     height: p.bounds.height,
                 })),
@@ -1852,7 +1869,45 @@ export class NativeRenderer implements IChartRenderer {
         this.scene.format = i18n.format;
         this.inputsUI?.setI18n(i18n);
         this.applyRootAttributes();
+        this.relabel();
         if (this.scheduler) this.scheduler.invalidate(InvalidateLevel.Full);
+    }
+
+    /** Display text through the chart's translator (English until the chart hands one over). */
+    private t(m: MessageLike, values?: Record<string, string | number>): string {
+        return textOf(this.i18n, m, values);
+    }
+
+    /** An indicator's full name as the chart shows it. */
+    private modelTitle(model: IndicatorModel): string {
+        return this.t(model.displayTitle ?? model.title);
+    }
+
+    /** The compact name the legend chip, the settings dialog and the object tree show. */
+    private legendTitle(model: IndicatorModel): string {
+        const short = model.displayShorttitle ?? model.shorttitle;
+        return short !== undefined ? this.t(short) : this.modelTitle(model);
+    }
+
+    /** A series' name as the legend and the data window show it. */
+    private seriesTitle(s: SeriesSpec, model: IndicatorModel): string {
+        if (s.displayTitle) return this.t(s.displayTitle);
+        return s.title || this.modelTitle(model);
+    }
+
+    /** Re-read the chrome text the renderer owns in the current language. */
+    private relabel(): void {
+        if (this.settingsButton) this.settingsButton.title = this.t(TEXT.chartSettings);
+        if (this.scrollButton) {
+            this.scrollButton.title = this.t(TEXT.scrollToLatestTitle);
+            this.scrollButton.setAttribute('aria-label', this.t(TEXT.scrollToLatest));
+        }
+        if (this.keyboardEnabled && this.dataCanvas?.hasAttribute('aria-label')) this.dataCanvas.setAttribute('aria-label', this.t(TEXT.keyboardHelp));
+        if (this.inputsUI) {
+            for (const model of this.scene.indicators.values()) {
+                if (model.legend !== false) this.inputsUI.setTitle(model.id, this.legendTitle(model));
+            }
+        }
     }
 
     private applyRootAttributes(): void {
@@ -2251,7 +2306,7 @@ export class NativeRenderer implements IChartRenderer {
         // shorttitle when declared; the full title stays on the picker and inspect(). A
         // `legend: false` native gets none of it — the scene model still mounts and paints.
         if (model.legend !== false) {
-            this.inputsUI.upsert(model.id, model.shorttitle ?? model.title, model.inputs, model.inputValues, model.paneId, {
+            this.inputsUI.upsert(model.id, this.legendTitle(model), model.inputs, model.inputValues, model.paneId, {
                 native: !!model.native,
                 ...(model.props ? { props: model.props, propValues: model.propValues ?? {} } : {}),
             });
@@ -3139,7 +3194,7 @@ export class NativeRenderer implements IChartRenderer {
         if (enabled) {
             this.dataCanvas.tabIndex = 0;
             this.dataCanvas.setAttribute('role', 'application');
-            this.dataCanvas.setAttribute('aria-label', 'Interactive price chart. Use Left/Right arrows to move between bars, Shift+Arrow to pan, plus/minus to zoom, Home/End to jump, 0 to reset.');
+            this.dataCanvas.setAttribute('aria-label', this.t(TEXT.keyboardHelp));
             if (!this.liveRegion && this.wrapper) {
                 this.liveRegion = document.createElement('div');
                 this.liveRegion.setAttribute('aria-live', 'polite');
@@ -3217,9 +3272,9 @@ export class NativeRenderer implements IChartRenderer {
         const ohlc = this.dataWindowOHLC(bar, pricePane);
         const parts: string[] = [];
         if (bar) parts.push(formatStamp(bar.time, this.scene.timezone));
-        if (ohlc) parts.push(`Open ${ohlc.o}, High ${ohlc.h}, Low ${ohlc.l}, Close ${ohlc.c}`);
+        if (ohlc) parts.push(this.t(TEXT.barSummary, { open: ohlc.o, high: ohlc.h, low: ohlc.l, close: ohlc.c }));
         for (const group of this.dataWindowGroups(idx, pricePane)) {
-            for (const row of group.rows) parts.push(`${row.label} ${row.value}`);
+            for (const row of group.rows) parts.push(this.t(TEXT.valueSummary, { name: row.label, value: row.value }));
         }
         this.liveRegion.textContent = parts.join('. ');
     }
@@ -3268,7 +3323,7 @@ export class NativeRenderer implements IChartRenderer {
         const groups: DataWindowGroup[] = [];
         for (const model of this.scene.indicators.values()) {
             const rows = this.readoutRowsFor(model, idx, pricePane, 'dataWindow');
-            if (rows.length) groups.push({ name: model.title, rows });
+            if (rows.length) groups.push({ name: this.modelTitle(model), rows });
         }
         return groups;
     }
@@ -3297,7 +3352,7 @@ export class NativeRenderer implements IChartRenderer {
                 continue; // markers carry no scalar readout
             }
             if (value == null || !Number.isFinite(value)) continue;
-            rows.push({ label: s.title || model.title, value: this.dataWindowFmt(value, pane, surface === 'legend' ? 'legend' : 'dataWindow'), color });
+            rows.push({ label: this.seriesTitle(s, model), value: this.dataWindowFmt(value, pane, surface === 'legend' ? 'legend' : 'dataWindow'), color });
         }
         return rows;
     }
@@ -3312,7 +3367,7 @@ export class NativeRenderer implements IChartRenderer {
         if (bar == null || vol == null || !Number.isFinite(vol)) return [];
         const cfg = this.scene.volumeLayer;
         const color = bar.close >= bar.open ? (cfg?.upColor ?? this.theme.upColor) : (cfg?.downColor ?? this.theme.downColor);
-        return [{ label: model.title, value: this.formatVolume(vol, surface), color }];
+        return [{ label: this.modelTitle(model), value: this.formatVolume(vol, surface), color }];
     }
 
     /** Refresh the plot values beside every legend title — the same bar the data window reads
@@ -3842,7 +3897,7 @@ export class NativeRenderer implements IChartRenderer {
     private paneMasterTitle(paneId: string): string | null {
         const models = this.scene.orderedIndicatorsForPane(paneId);
         const master = models.find((m) => m.ownScale !== true) ?? models[0];
-        return master?.title || null;
+        return master ? this.modelTitle(master) || null : null;
     }
 
     /**

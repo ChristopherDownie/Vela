@@ -8,6 +8,11 @@ import { getNativeIndicator, nativeIndicatorTypes, unregisterNativeIndicator } f
 import { classicSpecs, registerClassicIndicators, classicDescriptor } from '../src/core/native-indicators/classics';
 import { sma, ema, rma, wma, stdev, rsi, linreg, highest, lowest, percentRank, swma, cumSum, change } from '../src/core/native-indicators/classics/math';
 import type { ClassicIndicatorSpec } from '../src/core/native-indicators/classics';
+import { createTranslator, type MessageLike } from '../src/plugin';
+
+/** The catalog's text as an English chart shows it. */
+const english = createTranslator({ locale: 'en' });
+const en = (m: MessageLike | undefined): string | undefined => (m === undefined ? undefined : english.t(m));
 
 function bar(close: number, i: number, volume?: number): OHLCV {
     return { time: i * 60000, open: close, high: close + 1, low: close - 1, close, ...(volume != null ? { volume } : {}) };
@@ -191,7 +196,7 @@ describe('classic catalog registration', () => {
         for (const spec of classicSpecs) {
             const expected = libraryShort[spec.type];
             expect(expected, spec.type).toBeDefined();
-            expect(spec.shortTitle ?? spec.title, spec.type).toBe(expected);
+            expect(en(spec.shortTitle ?? spec.title), spec.type).toBe(expected);
         }
     });
 
@@ -216,15 +221,15 @@ describe('classic catalog registration', () => {
         const byType = new Map(classicSpecs.map((s) => [s.type, s] as const));
         const smaSpec = byType.get('sma')!;
         const emaSpec = byType.get('ema')!;
-        expect(smaSpec.title).toBe('Simple Moving Average');
-        expect(emaSpec.title).toBe('Exponential Moving Average');
+        expect(en(smaSpec.title)).toBe('Simple Moving Average');
+        expect(en(emaSpec.title)).toBe('Exponential Moving Average');
         expect(smaSpec.inputs.map((i) => i.key)).toEqual(['length', 'source', 'offset', 'color']);
         expect(emaSpec.inputs.map((i) => i.key)).toEqual(['length', 'source', 'offset', 'color']);
         const closes = bars.map((b) => b.close);
         const smaOut = smaSpec.compute(bars, classicDescriptor(smaSpec).defaultInputs()).plots[0]!;
         const emaOut = emaSpec.compute(bars, classicDescriptor(emaSpec).defaultInputs()).plots[0]!;
-        expect(smaOut.title).toBe('SMA');
-        expect(emaOut.title).toBe('EMA');
+        expect(en(smaOut.title)).toBe('SMA');
+        expect(en(emaOut.title)).toBe('EMA');
         expect(smaOut.values).toEqual(sma(closes, 20));
         expect(emaOut.values).toEqual(ema(closes, 20));
         // The offset shifts the line without changing its values.
@@ -239,7 +244,7 @@ describe('classic catalog registration', () => {
         expect(byType.has('linear-regression')).toBe(false);
 
         const lsma = byType.get('lsma')!;
-        expect(lsma.title).toBe('Least Squares Moving Average');
+        expect(en(lsma.title)).toBe('Least Squares Moving Average');
         expect(lsma.overlay).toBe(true);
         const lsmaOut = lsma.compute(bars, classicDescriptor(lsma).defaultInputs());
         expect(lsmaOut.plots).toHaveLength(1);
@@ -249,7 +254,7 @@ describe('classic catalog registration', () => {
         expect(stepped.values).toEqual(linreg(closes, 30, 3));
 
         const slope = byType.get('linear-regression-slope')!;
-        expect(slope.title).toBe('Linear Regression Slope');
+        expect(en(slope.title)).toBe('Linear Regression Slope');
         expect(slope.overlay).toBe(false);
         const slopeOut = slope.compute(bars, classicDescriptor(slope).defaultInputs());
         const curve = linreg(closes, 100, 0);

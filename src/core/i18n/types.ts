@@ -9,6 +9,9 @@ export type { MessageValues };
 export interface MessageDescriptor {
     readonly id: string;
     readonly defaultMessage: string;
+    /** Values bound to the message's arguments (see `withValues`); values passed to `t()`
+     *  take precedence. */
+    readonly values?: MessageValues;
 }
 
 /** Display text: a plain string renders verbatim (untranslated); a descriptor is translated. */

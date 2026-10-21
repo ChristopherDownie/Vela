@@ -22,6 +22,7 @@
 // formats numbers and dates for the chart's locale.
 export {
     msg,
+    withValues,
     registerLocale,
     registeredLocales,
     createTranslator,

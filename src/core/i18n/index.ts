@@ -1,5 +1,6 @@
 // Vela's message system: `msg()` descriptors, locale packs, and the per-chart translator.
-export { msg } from './message';
+export { msg, withValues } from './message';
+export { sourceText, textOf } from './text';
 export { registerLocale, registeredLocales } from './registry';
 export { createTranslator, englishTranslator, formatSettingsOf, isMessageDescriptor, LocaleState } from './translator';
 export { canonicalLocale, fallbackChain, localeDirection } from './locale';

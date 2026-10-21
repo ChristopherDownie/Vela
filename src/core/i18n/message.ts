@@ -1,4 +1,4 @@
-import type { MessageDescriptor } from './types';
+import type { MessageDescriptor, MessageValues } from './types';
 
 /**
  * Declare a translatable message: a stable, dotted id and its English text in ICU message
@@ -8,4 +8,13 @@ import type { MessageDescriptor } from './types';
  */
 export function msg(id: string, defaultMessage: string): MessageDescriptor {
     return Object.freeze({ id, defaultMessage });
+}
+
+/**
+ * A message with values bound to its arguments, for display text declared before its
+ * values are known to the code that renders it (`withValues(BAND, { n: 2 })` reads
+ * "Band #2"). A translator formats the bound values; values passed to `t()` win.
+ */
+export function withValues(message: MessageDescriptor, values: MessageValues): MessageDescriptor {
+    return Object.freeze({ id: message.id, defaultMessage: message.defaultMessage, values: { ...message.values, ...values } });
 }

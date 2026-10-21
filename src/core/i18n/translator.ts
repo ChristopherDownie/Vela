@@ -116,6 +116,8 @@ export class LocaleState implements Translator {
         if (typeof message === 'string') return message;
         if (!isMessageDescriptor(message)) return message == null ? '' : String(message);
         const { id, defaultMessage } = message;
+        const bound = (message as { values?: MessageValues }).values;
+        if (bound) values = values ? { ...bound, ...values } : bound;
         const override = (this.opts.messages as Readonly<Record<string, string | undefined>> | undefined)?.[id];
         const source = typeof override === 'string' ? override : (messagesFor(this.chain).get(id) ?? defaultMessage);
         try {

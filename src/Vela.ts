@@ -136,6 +136,7 @@ export class Vela {
         this.drawingsControl = new DrawingsControl(this.orchestrator.drawings);
         this.marksControl = new MarksControl(this.orchestrator.marks);
         this.replayControl = new ReplayControl(this.orchestrator);
+        this.orchestrator.setTranslator(this.localeState);
         this.pushLocalization();
     }
 
@@ -158,6 +159,7 @@ export class Vela {
      */
     setLocale(next: string | LocalizationOptions): this {
         this.localeState.update(typeof next === 'string' ? { locale: next } : pickLocalization(next));
+        this.orchestrator.relocalize();
         this.pushLocalization();
         this.orchestrator.events.emit('locale:changed', { locale: this.localeState.locale, direction: this.localeState.direction });
         return this;
