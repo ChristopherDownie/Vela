@@ -5,6 +5,7 @@ import type { SceneGraph, PaneNode } from '../core/SceneGraph';
 import { formatAxisValue, formatTimeStamp } from './ticks';
 import { readableText } from '../backend/gl/color';
 import { percentScaleFor } from './ChromeRenderer';
+import { beginPlotFrame } from '../core/plotDirection';
 
 /**
  * Renderer-owned crosshair layer (chrome). Lives on its OWN transparent canvas
@@ -43,7 +44,7 @@ export class CrosshairRenderer {
         if (!ctx || !canvas) return;
 
         const dpr = coords.dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        beginPlotFrame(ctx, dpr);
         ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
 
         // Pane-separator hover affordance — drawn before the crosshair-presence guard so it

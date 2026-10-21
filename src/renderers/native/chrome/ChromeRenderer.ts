@@ -20,6 +20,7 @@ import { tagTextColor } from './contrast';
 import { markGroupVisible } from '../../shared/marks-state';
 import { clusterTooltip, layoutMarkLane, markGlyphAt, markStackAt, type MarkLaneLayout, type PlacedGlyph } from './marks/layout';
 import { MarkIconRaster, paintMarkLane } from './marks/paint';
+import { beginPlotFrame } from '../core/plotDirection';
 
 /** Opacity factor of a price-axis label whose tick is `major: false` (de-emphasized). */
 const MINOR_LABEL_ALPHA = 0.5;
@@ -124,7 +125,7 @@ export class ChromeRenderer {
         // The gutters (and their labels) use the surface the host passes (the live chart
         // background); everything data-side keeps the live theme.
         this.axisTextColor = surface?.textColor ?? theme.textColor;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        beginPlotFrame(ctx, dpr);
         ctx.clearRect(0, 0, fullW, fullH);
         // Paint the price-axis (right) + time-axis (bottom) gutters opaquely so drawings or
         // series pixels beneath never bleed into the scales. Data/drawings stay clear of
