@@ -2,12 +2,10 @@
 // code declares is in `src/locales/en.json` and its generated type, and every shipped pack
 // parses and names only messages that exist, with the same arguments as the English.
 import { describe, expect, it } from 'vitest';
-import { checkGenerated } from '../scripts/i18n-extract.mjs';
+import { checkGenerated, repoRoot as root } from '../scripts/i18n-extract.mjs';
 import { parseMessage } from '../src/core/i18n/icu';
 import { createTranslator, registerLocale } from '../src/plugin';
 import en from '../src/locales/en';
-
-const root = decodeURIComponent(new URL('..', import.meta.url).pathname);
 
 type JsonGlob = (pattern: string, options: { import: string; eager: true }) => Record<string, Record<string, string>>;
 const packFiles = (import.meta as unknown as { glob: JsonGlob }).glob('../src/locales/*.json', { import: 'default', eager: true });

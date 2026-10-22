@@ -1,4 +1,5 @@
 // Types for scripts/i18n-extract.mjs, so the catalog test can drive it.
+export const repoRoot: string;
 export function collectMessages(root: string): { messages: Map<string, string>; errors: string[] };
 export function renderEnJson(messages: Map<string, string>): string;
 export function renderCatalog(messages: Map<string, string>): string;
