@@ -34,7 +34,8 @@ const CSS = `
 }
 .vela-dw-row:hover { background: var(--vela-hover); }
 .vela-dw-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vela-fg-bright); }
-.vela-dw-value { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Values are left-to-right isolates (dir="ltr"), so a sign keeps its place in a right-to-left page. */
+.vela-dw-value { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; unicode-bidi: isolate; }
 .vela-dw-empty { padding: 20px 10px; text-align: center; color: var(--vela-fg-muted); font-size: 12px; }
 `;
 
@@ -150,6 +151,7 @@ export class DataWindow extends SidePanel {
                 label.textContent = line.label;
                 const value = doc.createElement('span');
                 value.className = 'vela-dw-value';
+                value.dir = 'ltr';
                 value.textContent = line.value;
                 if (line.color) value.style.color = line.color;
                 row.append(label, value);

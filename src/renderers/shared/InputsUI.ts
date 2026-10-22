@@ -122,7 +122,8 @@ const LEGEND_ROW_PAD_X = 6;
 const LEGEND_LEFT_PX = 10;
 /** Air the legend column keeps before the price scale — rows never run under it. */
 const LEGEND_SCALE_GAP_PX = 6;
-/** Space between the indicator title and the plot-values readout to its right. */
+/** Space between the indicator title and the plot-values readout after it (to its right
+ *  in a left-to-right page, to its left in a right-to-left one). */
 const LEGEND_TITLE_VALUES_GAP_PX = 6;
 /** Space between neighbouring plot values. */
 const LEGEND_VALUES_GAP_PX = 5;
@@ -484,11 +485,19 @@ export class InputsUI {
         // an ellipsis rather than a clipped number that reads as a different value.
         row.valuesEl.style.display = 'block';
         row.valuesEl.replaceChildren();
+        // Each value is a left-to-right isolate, so a sign stays in front of its number in a
+        // right-to-left page. The gap sits on an outer span that follows the page: a logical
+        // margin resolves against its element's own direction, and only the page's puts it
+        // between neighbouring values.
         row.plotValues.forEach((v, i) => {
             const span = document.createElement('span');
-            span.textContent = v.value;
             span.style.color = v.color;
-            if (i > 0) span.style.marginLeft = `${LEGEND_VALUES_GAP_PX}px`;
+            if (i > 0) span.style.marginInlineStart = `${LEGEND_VALUES_GAP_PX}px`;
+            const value = document.createElement('span');
+            value.dir = 'ltr';
+            value.style.unicodeBidi = 'isolate';
+            value.textContent = v.value;
+            span.appendChild(value);
             row.valuesEl.appendChild(span);
         });
     }
@@ -903,7 +912,7 @@ export class InputsUI {
         const valuesEl = document.createElement('span');
         valuesEl.style.cssText =
             `display:none;flex:1 1 0%;min-width:0;overflow:hidden;text-overflow:ellipsis;` +
-            `margin-left:${LEGEND_TITLE_VALUES_GAP_PX}px;white-space:nowrap;font-variant-numeric:tabular-nums;`;
+            `margin-inline-start:${LEGEND_TITLE_VALUES_GAP_PX}px;white-space:nowrap;font-variant-numeric:tabular-nums;`;
         el.appendChild(valuesEl);
         // Action cluster (eye / gear / move / extras / ✕) — one tight row of equal hit targets.
         // Revealed on hover/selection; a hidden indicator keeps its eye reachable without hover.

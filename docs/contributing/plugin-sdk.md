@@ -113,6 +113,11 @@ registerRendererLayer({
 });
 ```
 
+**Text reads left to right in every page.** The plot never mirrors, so the layer canvas
+carries `dir="ltr"`: a 2D context you open on it lays text out left to right even when the
+host page is right to left, and a sign stays in front of its number. Leave the context's
+`direction` at its default (`'inherit'`) to keep that.
+
 **Ownership — layers backed by a native indicator.** When a mounted native indicator's
 type equals a layer's id, that indicator OWNS the layer, and the layer joins the chart's
 normal object model instead of sitting outside it:

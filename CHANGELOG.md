@@ -2,6 +2,20 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Fixed
+
+- **Charts keep numbers in reading order inside right-to-left pages.** On a page that reads
+  right to left, such as an Arabic or Hebrew app, the chart moved signs and percent signs to
+  the far end of their numbers: the price scale read `7.14%-`, the status line
+  `(0.08%+) 44.71+`, and the Volume legend ran its name into its value. The chart area now
+  reads left to right in every page, as its time axis already did: price and time labels,
+  crosshair labels, script labels and tables, drawing text and the measuring ruler keep their
+  order, and so does text that plugins paint on the chart. The values in the status line, the
+  indicator legend and the data window keep their sign in front of the number, while the rows
+  around them still follow the page. Pages that read left to right look exactly as before.
+
 ## [0.8.5]
 
 ### Added
