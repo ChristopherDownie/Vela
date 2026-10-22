@@ -18,10 +18,6 @@ const TEXT = {
     stay: msg('widget.drawingPill.stay', 'Stay in drawing mode'),
     eraser: msg('widget.drawingPill.eraser', 'Eraser'),
     exit: msg('widget.drawingPill.exit', 'Exit drawing mode'),
-    /** The magnet badge: the first letter of "Weak". */
-    weakBadge: msg('widget.drawingPill.weakBadge', 'W'),
-    /** The magnet badge: the first letter of "Strong". */
-    strongBadge: msg('widget.drawingPill.strongBadge', 'S'),
 };
 
 const STYLE_ID = 'vela-widget-drawing-pill';
@@ -73,12 +69,17 @@ const CSS = `
 .vela-drawpill-btn .vela-icon { font-size: 17px; width: 17px; height: 17px; }
 .vela-drawpill-badge {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 8px;
-    font-weight: 700;
+    top: 5px;
+    right: 5px;
+    display: none;
+    align-items: flex-end;
+    gap: 1px;
     color: var(--vela-accent);
 }
+.vela-drawpill-badge[data-strength] { display: inline-flex; }
+.vela-drawpill-badge > i { display: block; width: 2px; height: 4px; border-radius: 1px; background: currentColor; }
+.vela-drawpill-badge > i + i { height: 7px; opacity: 0.3; }
+.vela-drawpill-badge[data-strength='strong'] > i + i { opacity: 1; }
 `;
 
 export class DrawingPill {
@@ -115,8 +116,12 @@ export class DrawingPill {
             const cur = this.chart?.drawings.getSnapMode() ?? 'off';
             this.chart?.drawings.setSnapMode(order[(order.indexOf(cur) + 1) % order.length]!);
         });
+        // The magnet's strength as signal bars, one lit for weak and both for strong: a
+        // letter cannot tell them apart in languages where both words share an initial.
         this.magnetBadge = doc.createElement('span');
         this.magnetBadge.className = 'vela-drawpill-badge';
+        this.magnetBadge.setAttribute('aria-hidden', 'true');
+        this.magnetBadge.append(doc.createElement('i'), doc.createElement('i'));
         this.magnetBtn.appendChild(this.magnetBadge);
         this.stayBtn = btn(iconMarkup('pen-lock') ? 'pen-lock' : 'pen', TEXT.stay, () => {
             this.chart?.drawings.setStayMode(!this.chart.drawings.getStayMode());
@@ -174,7 +179,8 @@ export class DrawingPill {
         this.toolGlyph.innerHTML = tool !== null ? (getDrawingType(tool)?.icon ?? '') : (iconMarkup('eraser') ?? '');
         const snap = drawings.getSnapMode();
         this.magnetBtn.dataset.on = snap !== 'off' ? '1' : '';
-        this.magnetBadge.textContent = snap === 'weak' ? this.t(TEXT.weakBadge) : snap === 'strong' ? this.t(TEXT.strongBadge) : '';
+        if (snap === 'off') delete this.magnetBadge.dataset.strength;
+        else this.magnetBadge.dataset.strength = snap;
         this.stayBtn.dataset.on = drawings.getStayMode() ? '1' : '';
         this.eraserBtn.dataset.on = eraser ? '1' : '';
     }

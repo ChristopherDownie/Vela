@@ -64,7 +64,7 @@ const SOURCES = ['close', 'open', 'high', 'low', 'hl2', 'hlc3', 'ohlc4', 'volume
 
 const TEXT = {
     cancel: msg('chart.indicatorSettings.cancel', 'Cancel'),
-    ok: msg('chart.indicatorSettings.ok', 'Ok'),
+    ok: msg('chart.indicatorSettings.ok', 'OK'),
     resetDefaults: msg('chart.indicatorSettings.resetDefaults', 'Reset defaults'),
     close: msg('chart.indicatorSettings.close', 'Close'),
     inputsTab: msg('chart.indicatorSettings.inputsTab', 'Inputs'),

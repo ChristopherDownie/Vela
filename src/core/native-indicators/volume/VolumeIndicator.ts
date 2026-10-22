@@ -89,7 +89,7 @@ export const volumeDescriptor: NativeIndicatorDescriptor = {
             min: 5,
             max: 50,
             step: 1,
-            tooltip: msg('indicator.volume.heightPct.tooltip', 'Pane height the tallest visible bar occupies'),
+            tooltip: msg('indicator.volume.heightPct.tooltip', 'Panel height the tallest visible bar occupies.'),
         }),
     ],
     defaultInputs: (): Record<string, InputValue> => ({ upColor: DEFAULT_UP, downColor: DEFAULT_DOWN, heightPct: DEFAULT_HEIGHT_PCT }),

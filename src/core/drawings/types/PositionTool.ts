@@ -11,7 +11,7 @@ import { VALID, INVALID } from '../../palette';
 /** The painted labels; `direction` is `long` or `short`, numbers come formatted. */
 const POSITION_TEXT = {
     header: msg('drawing.position.header', '{direction, select, long {LONG} other {SHORT}}  ·  R:R {ratio}'),
-    lossSize: msg('drawing.position.lossSize', 'Loss ${loss}  ·  Size {size}'),
+    lossSize: msg('drawing.position.lossSize', 'Loss {loss}  ·  Size {size}'),
     target: msg('drawing.position.targetLabel', 'Target +{percent}%'),
     targetAt: msg('drawing.position.targetLabelAt', 'Target +{percent}%  @ {price}'),
     stop: msg('drawing.position.stopLabel', 'Stop −{percent}%'),
@@ -33,9 +33,9 @@ export const DIRECTION_OPTIONS: ReadonlyArray<{ value: string; label: MessageLik
  * second click is the *profit* direction — dragging higher from the entry paints the green
  * reward zone above (a long); dragging lower paints it below (a short). The shaded reward
  * (entry↔target) and risk (entry↔stop) zones carry a computed risk:reward, target/stop
- * percentages, and — from the account balance + risk % settings — a dollar loss and position
- * size. Zone colors, the label text (visibility, size, color, level prices), and the three
- * price levels are all editable through settings.
+ * percentages, and — from the account balance + risk % settings — the amount lost at the
+ * stop and the position size. Zone colors, the label text (visibility, size, color, level
+ * prices), and the three price levels are all editable through settings.
  */
 export class PositionTool extends Drawing {
     readonly type = 'position' as const;
@@ -53,9 +53,10 @@ export class PositionTool extends Drawing {
     private static readonly DEFAULT_LOSS_COLOR = INVALID;
 
     // Declared with `!` so a field default never clobbers readProps (base constructor runs first).
-    /** Percent of account balance risked on the stop (drives dollar loss + position size). */
+    /** Percent of account balance risked on the stop (drives the loss amount + position size). */
     riskPercent!: number;
-    /** Account balance in dollars (drives dollar loss + position size). */
+    /** Account balance, in no particular currency (drives the loss amount + position size).
+     *  The loss label therefore shows a plain number. */
     accountBalance!: number;
     /** Master toggle for every painted label. */
     showText!: boolean;
@@ -63,7 +64,7 @@ export class PositionTool extends Drawing {
     showHeader!: boolean;
     /** Append the level price to the target/stop labels. */
     showPrices!: boolean;
-    /** Show the `Loss $ · Size` line above the box. */
+    /** Show the `Loss · Size` line above the box. */
     showLossSize!: boolean;
     /** Show the `Target +%` label inside the reward zone. */
     showTargetLabel!: boolean;
@@ -273,7 +274,7 @@ export class PositionTool extends Drawing {
         return p && p.entry !== 0 ? (Math.abs(p.entry - p.stop) / p.entry) * 100 : 0;
     }
 
-    /** Dollar amount risked at the stop = accountBalance × riskPercent / 100. */
+    /** Amount risked at the stop, in the balance's units = accountBalance × riskPercent / 100. */
     dollarLoss(): number {
         return Math.max(0, this.accountBalance) * (Math.max(0, this.riskPercent) / 100);
     }
@@ -297,7 +298,7 @@ export class PositionTool extends Drawing {
         });
     }
 
-    /** `Loss $… · Size …` — the painter hides it when showLossSize is off. */
+    /** `Loss … · Size …` — the painter hides it when showLossSize is off. */
     lossSizeLabel(i18n?: Translator): string {
         return textOf(i18n, POSITION_TEXT.lossSize, {
             loss: localizeNumberText(formatMoney(this.dollarLoss()), i18n),

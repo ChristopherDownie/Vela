@@ -12,7 +12,7 @@ import type { Translator } from '../core/i18n/types';
 
 const TEXT = {
     mainChart: msg('widget.objectTree.mainChart', 'Main chart'),
-    pane: msg('widget.objectTree.pane', 'Pane {n}'),
+    pane: msg('widget.objectTree.pane', 'Panel {n}'),
     drawingWithText: msg('widget.objectTree.drawingWithText', '{name} — {text}'),
     group: msg('widget.objectTree.group', 'Group {n}'),
 };

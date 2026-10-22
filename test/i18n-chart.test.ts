@@ -250,4 +250,37 @@ describe('localized chrome', () => {
         expect(cal.querySelectorAll('.vela-date-picker-nav')[1]!.getAttribute('aria-label')).toBe('Nächster Monat');
         dialog.close();
     });
+
+    it("the unit after the chart's right margin agrees with its number, so each language can inflect it", async () => {
+        const settle = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+        disposers.push(registerLocale({ locale: 'pl', messages: { 'chart.settings.unitBars': '{count, plural, one {słupek} few {słupki} many {słupków} other {słupka}}' } }));
+        const host = document.createElement('div');
+        document.body.append(host);
+        const ws = new VelaWorkspace(host, { layout: false } as never);
+        disposers.push(() => ws.destroy());
+        const chart = ws.cells()[0]!.chart;
+        chart.renderer.openSettings('Canvas');
+        await settle();
+        const row = (): HTMLElement => document.querySelector<HTMLElement>('[data-sd-id="canvas.margins.right"]')!;
+        const unit = (): string => row().querySelector('span[style]')!.textContent ?? '';
+        const setMargin = (bars: number): void => {
+            const input = row().querySelector<HTMLInputElement>('input')!;
+            input.value = String(bars);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        setMargin(1);
+        expect(unit()).toBe('bar');
+        setMargin(5);
+        expect(unit()).toBe('bars');
+
+        chart.renderer.openSettings(); // closes it
+        ws.setLocale('pl');
+        chart.renderer.openSettings('Canvas'); // the pack leaves the tab's name in English
+        await settle();
+        setMargin(2);
+        expect(unit()).toBe('słupki');
+        setMargin(5);
+        expect(unit()).toBe('słupków');
+    });
 });

@@ -195,8 +195,8 @@ new VelaWorkspace('#chart', {
       'symbol.style.candles.wick',           //     Wick toggle + colors
       'symbol.style.candles.spacing',        //     Spacing
       'symbol.style.bars',                   //   Bars group
-      'symbol.style.bars.up-color',          //     Color Up
-      'symbol.style.bars.down-color',        //     Color Down
+      'symbol.style.bars.up-color',          //     Up color
+      'symbol.style.bars.down-color',        //     Down color
       'symbol.style.bars.spacing',           //     Spacing
       'symbol.style.line',                   //   Line group
       'symbol.style.line.color',             //     Color
@@ -226,7 +226,7 @@ new VelaWorkspace('#chart', {
       'scales.price-scale',                  //   Price scale group
       'scales.price-scale.mode',             //     Regular/Percent/Indexed/Logarithmic
       'scales.price-scale.invert',           //     Invert scale
-      'scales.price-scale.last-price-line',  //     Last Price Line
+      'scales.price-scale.last-price-line',  //     Last price line
       'scales.price-scale.last-price-label', //     Last price label
       'scales.price-scale.countdown',        //     Countdown to bar close
       'scales.price-scale.axis-labels',      //     Axis labels
@@ -242,7 +242,7 @@ new VelaWorkspace('#chart', {
       'canvas.background.color',             //     Background
       'canvas.background.text-color',        //     Text color
       'canvas.background.text-size',         //     Text size
-      'canvas.background.pane-separator',    //     Pane separator color
+      'canvas.background.pane-separator',    //     Panel separator color
       'canvas.grid',                         //   Grid group
       'canvas.grid.vertical',                //     Vertical lines toggle + color
       'canvas.grid.horizontal',              //     Horizontal lines toggle + color

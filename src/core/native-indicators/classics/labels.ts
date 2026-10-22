@@ -4,9 +4,9 @@ import type { InputLabels } from '../localize';
 /**
  * Shown labels for the catalog's section names and option values. Both are identities
  * (a saved layout stores the option value, inputs key their section by name), so they
- * stay English in the schema and only read translated. Abbreviations and the names of
- * methods' authors (SMA, HL2, Wilder, Camarilla) are not listed: they read the same in
- * every language.
+ * stay English in the schema and only read translated. Abbreviations such as SMA, HL2 and
+ * RMA (SMMA) are not listed: they read the same in every language. Named methods are, since
+ * other scripts write the names in their own letters.
  */
 export const CLASSIC_INPUT_LABELS: InputLabels = {
     groups: {
@@ -37,6 +37,14 @@ export const CLASSIC_INPUT_LABELS: InputLabels = {
         'Standard Deviation': msg('indicator.option.standardDeviation', 'Standard Deviation'),
         Percentage: msg('indicator.option.percentage', 'Percentage'),
         Traditional: msg('indicator.option.traditional', 'Traditional'),
+        Fibonacci: msg('indicator.option.fibonacci', 'Fibonacci'),
+        Camarilla: msg('indicator.option.camarilla', 'Camarilla'),
+        Woodie: msg('indicator.option.woodie', 'Woodie'),
+        'ROC %': msg('indicator.option.rocPercent', 'ROC %'),
+        McGinley: msg('indicator.option.mcGinley', 'McGinley'),
+        Hamming: msg('indicator.option.hamming', 'Hamming'),
+        'SMMA (Wilder)': msg('indicator.option.smmaWilder', 'SMMA (Wilder)'),
+        'Wilder (RMA)': msg('indicator.option.wilderRma', 'Wilder (RMA)'),
         Auto: msg('indicator.option.auto', 'Auto'),
         Daily: msg('indicator.option.daily', 'Daily'),
         Weekly: msg('indicator.option.weekly', 'Weekly'),

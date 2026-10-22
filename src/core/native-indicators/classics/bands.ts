@@ -284,8 +284,8 @@ const chandeKroll: ClassicIndicatorSpec = {
         intInput('p', msg('indicator.chandeKrollStop.p', 'ATR Length (P)'), 10, 1, 5000, msg('indicator.chandeKrollStop.p.tooltip', 'Lookback used for both the ATR and the highest high / lowest low price extremes.')),
         floatInput('x', msg('indicator.chandeKrollStop.x', 'ATR Multiplier (X)'), 1, 0, 50, 0.1, msg('indicator.chandeKrollStop.x.tooltip', 'Multiplier applied to the ATR to offset the preliminary stops from the price extremes.')),
         intInput('q', msg('indicator.chandeKrollStop.q', 'Stop Length (Q)'), 9, 1, 5000, msg('indicator.chandeKrollStop.q.tooltip', 'Lookback over which the preliminary stops are extended into the final stop levels.')),
-        colorInput(BEARISH, msg('indicator.chandeKrollStop.shortColor', 'Stop Short'), 'shortColor', msg('indicator.chandeKrollStop.shortColor.tooltip', 'Color of the protective stop line for short positions.')),
-        colorInput(BULLISH, msg('indicator.chandeKrollStop.longColor', 'Stop Long'), 'longColor', msg('indicator.chandeKrollStop.longColor.tooltip', 'Color of the protective stop line for long positions.')),
+        colorInput(BEARISH, msg('indicator.chandeKrollStop.shortColor', 'Short Stop'), 'shortColor', msg('indicator.chandeKrollStop.shortColor.tooltip', 'Color of the protective stop line for short positions.')),
+        colorInput(BULLISH, msg('indicator.chandeKrollStop.longColor', 'Long Stop'), 'longColor', msg('indicator.chandeKrollStop.longColor.tooltip', 'Color of the protective stop line for long positions.')),
     ],
     compute: (bars, inputs) => {
         const p = num(inputs, 'p', 10);
@@ -295,8 +295,8 @@ const chandeKroll: ClassicIndicatorSpec = {
         const firstLow = zip(lowest(lows(bars), p), range, (l, r) => l + r);
         return {
             plots: [
-                { key: 'stopShort', title: msg('indicator.chandeKrollStop.plot.stopShort', 'Stop Short'), values: highest(firstHigh, q), color: str(inputs, 'shortColor', BEARISH) },
-                { key: 'stopLong', title: msg('indicator.chandeKrollStop.plot.stopLong', 'Stop Long'), values: lowest(firstLow, q), color: str(inputs, 'longColor', BULLISH) },
+                { key: 'stopShort', title: 'Stop Short', displayTitle: msg('indicator.chandeKrollStop.plot.stopShort', 'Short Stop'), values: highest(firstHigh, q), color: str(inputs, 'shortColor', BEARISH) },
+                { key: 'stopLong', title: 'Stop Long', displayTitle: msg('indicator.chandeKrollStop.plot.stopLong', 'Long Stop'), values: lowest(firstLow, q), color: str(inputs, 'longColor', BULLISH) },
             ],
         };
     },
@@ -424,8 +424,8 @@ const gator: ClassicIndicatorSpec = {
         };
         return {
             plots: [
-                { key: 'upper', title: msg('indicator.gatorOscillator.plot.upper', 'Upper Histogram (Jaw - Teeth)'), values: upper, kind: 'columns', color: grow, colors: expansionColors(upper), base: 0 },
-                { key: 'lower', title: msg('indicator.gatorOscillator.plot.lower', 'Lower Histogram (Teeth - Lips)'), values: map(lower, (x) => -x), kind: 'columns', color: shrink, colors: expansionColors(lower), base: 0 },
+                { key: 'upper', title: 'Upper Histogram (Jaw - Teeth)', displayTitle: msg('indicator.gatorOscillator.plot.upper', 'Upper Histogram (Jaw − Teeth)'), values: upper, kind: 'columns', color: grow, colors: expansionColors(upper), base: 0 },
+                { key: 'lower', title: 'Lower Histogram (Teeth - Lips)', displayTitle: msg('indicator.gatorOscillator.plot.lower', 'Lower Histogram (Teeth − Lips)'), values: map(lower, (x) => -x), kind: 'columns', color: shrink, colors: expansionColors(lower), base: 0 },
             ],
             levels: [{ key: 'zero', price: 0, color: str(inputs, 'zeroColor', NEUTRAL), lineStyle: 'solid', title: msg('indicator.gatorOscillator.level.zero', 'Zero Line') }],
         };

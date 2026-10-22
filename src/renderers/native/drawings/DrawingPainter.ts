@@ -17,7 +17,7 @@ const TEXT = {
     noData: msg('drawing.magnifier.noData', 'No lower-timeframe data'),
     tooWide: msg('drawing.magnifier.tooWide', 'Area too wide for this timeframe'),
     noneLower: msg('drawing.magnifier.noneLower', 'No lower timeframe available'),
-    notLower: msg('drawing.magnifier.notLower', 'Pick a timeframe below the chart'),
+    notLower: msg('drawing.magnifier.notLower', "Pick a timeframe lower than the chart's"),
     noSource: msg('drawing.magnifier.noSource', 'No data source'),
     infoLine: msg('drawing.infoline.measure', '{change} ({percent}%)  {count, plural, one {{bars} bar} other {{bars} bars}}'),
 };

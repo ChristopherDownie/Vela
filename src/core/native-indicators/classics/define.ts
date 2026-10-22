@@ -25,6 +25,9 @@ export interface ClassicPlot {
     /** The plot's name. Its English text is the series' identity (its id, its output
      *  key); a message shows translated wherever the chart names the plot. */
     title: MessageLike;
+    /** Shown instead of {@link title} where the chart names the plot, for a plot whose
+     *  shown name differs from its English identity. */
+    displayTitle?: MessageLike;
     /** Series kind; default `'line'`. */
     kind?: LineLikeKind;
     values: readonly number[];
@@ -166,7 +169,7 @@ class ClassicIndicator implements NativeIndicator {
             const title = sourceText(plot.title);
             const id = stableSeriesId({ instanceId, kind, title, ordinal });
             idsByKey.set(plot.key, id);
-            const displayTitle = messageOnly(plot.title);
+            const displayTitle = plot.displayTitle ?? messageOnly(plot.title);
             series.push({
                 id,
                 title,

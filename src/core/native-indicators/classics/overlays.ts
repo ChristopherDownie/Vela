@@ -201,8 +201,8 @@ const pivotPoints: ClassicIndicatorSpec = {
     shortTitle: msg('indicator.pivotPoints.shortTitle', 'Pivots'),
     overlay: true,
     inputs: [
-        optionInput('kind', msg('indicator.pivotPoints.kind', 'Type'), PIVOT_TRADITIONAL, [PIVOT_TRADITIONAL, PIVOT_FIBONACCI, PIVOT_CAMARILLA, PIVOT_WOODIE], msg('indicator.pivotPoints.kind.tooltip', 'Formula used to calculate the levels. Traditional is the classic floor-trader method; Fibonacci projects 38.2/61.8/100% of the prior range around the pivot; Camarilla scales the prior range around the prior close; Woodie gives extra weight to the period open.')),
-        optionInput('anchor', msg('indicator.pivotPoints.anchor', 'Pivots Timeframe'), PIVOT_AUTO, [PIVOT_AUTO, 'Daily', 'Weekly', 'Monthly', 'Yearly'], msg('indicator.pivotPoints.anchor.tooltip', "Period the pivots are anchored to. 'Auto' follows the chart's bar spacing: daily pivots up to 15-minute bars, weekly on other intraday bars, monthly on daily bars, yearly above.")),
+        optionInput('kind', msg('indicator.pivotPoints.kind', 'Type'), PIVOT_TRADITIONAL, [PIVOT_TRADITIONAL, PIVOT_FIBONACCI, PIVOT_CAMARILLA, PIVOT_WOODIE], withValues(msg('indicator.pivotPoints.kind.tooltip', 'Formula used to calculate the levels. Traditional is the classic floor-trader method; Fibonacci projects {level1, number}/{level2, number}/{level3, number}% of the prior range around the pivot; Camarilla scales the prior range around the prior close; Woodie gives extra weight to the period open.'), { level1: 38.2, level2: 61.8, level3: 100 })),
+        optionInput('anchor', msg('indicator.pivotPoints.anchor', 'Pivots Timeframe'), PIVOT_AUTO, [PIVOT_AUTO, 'Daily', 'Weekly', 'Monthly', 'Yearly'], msg('indicator.pivotPoints.anchor.tooltip', "Period the pivots are anchored to. Auto follows the chart's timeframe: daily pivots up to 15-minute bars, weekly on other intraday bars, monthly on daily bars, yearly above.")),
         colorInput(WARNING, msg('indicator.pivotPoints.pivotColor', 'Pivot'), 'pivotColor', msg('indicator.pivotPoints.pivotColor.tooltip', 'Color of the central pivot (P) level.')),
         colorInput(BEARISH, msg('indicator.pivotPoints.resistanceColor', 'Resistances'), 'resistanceColor', msg('indicator.pivotPoints.resistanceColor.tooltip', 'Color of the resistance (R) levels.')),
         colorInput(BULLISH, msg('indicator.pivotPoints.supportColor', 'Supports'), 'supportColor', msg('indicator.pivotPoints.supportColor.tooltip', 'Color of the support (S) levels.')),
@@ -290,14 +290,14 @@ const pivotPoints: ClassicIndicatorSpec = {
 
 const fiftyTwoWeek: ClassicIndicatorSpec = {
     type: '52-week-high-low',
-    title: msg('indicator.n52WeekHighLow.title', '52 Week High/Low'),
+    title: msg('indicator.n52WeekHighLow.title', '52-Week High/Low'),
     shortTitle: msg('indicator.n52WeekHighLow.shortTitle', '52W H/L'),
     overlay: true,
     inputs: [
         intInput('weeks', msg('indicator.n52WeekHighLow.weeks', 'Weeks'), 52, 1, 520, msg('indicator.n52WeekHighLow.weeks.tooltip', 'Length of the rolling window, in weeks.')),
         boolInput('showAllTime', msg('indicator.n52WeekHighLow.showAllTime', 'Show All-Time High/Low'), false, SETTINGS, msg('indicator.n52WeekHighLow.showAllTime.tooltip', "Additionally display the all-time high and low, tracked over the symbol's full loaded history.")),
-        colorInput(BULLISH, msg('indicator.n52WeekHighLow.highColor', '52 Week High'), 'highColor', msg('indicator.n52WeekHighLow.highColor.tooltip', 'Color of the 52 week high level.')),
-        colorInput(BEARISH, msg('indicator.n52WeekHighLow.lowColor', '52 Week Low'), 'lowColor', msg('indicator.n52WeekHighLow.lowColor.tooltip', 'Color of the 52 week low level.')),
+        colorInput(BULLISH, msg('indicator.n52WeekHighLow.highColor', '52-Week High'), 'highColor', msg('indicator.n52WeekHighLow.highColor.tooltip', 'Color of the 52-week high level.')),
+        colorInput(BEARISH, msg('indicator.n52WeekHighLow.lowColor', '52-Week Low'), 'lowColor', msg('indicator.n52WeekHighLow.lowColor.tooltip', 'Color of the 52-week low level.')),
         colorInput(NEUTRAL, msg('indicator.n52WeekHighLow.allTimeColor', 'All-Time High/Low'), 'allTimeColor', msg('indicator.n52WeekHighLow.allTimeColor.tooltip', 'Color of the all-time high and all-time low levels.')),
     ],
     compute: (bars, inputs) => {
@@ -330,8 +330,8 @@ const fiftyTwoWeek: ClassicIndicatorSpec = {
             atl[i] = runLow;
         }
         const plots: ClassicPlot[] = [
-            { key: 'high', title: msg('indicator.n52WeekHighLow.plot.high', '52 Week High'), values: hi, kind: 'step', color: str(inputs, 'highColor', BULLISH), width: 2 },
-            { key: 'low', title: msg('indicator.n52WeekHighLow.plot.low', '52 Week Low'), values: lo, kind: 'step', color: str(inputs, 'lowColor', BEARISH), width: 2 },
+            { key: 'high', title: '52 Week High', displayTitle: msg('indicator.n52WeekHighLow.plot.high', '52-Week High'), values: hi, kind: 'step', color: str(inputs, 'highColor', BULLISH), width: 2 },
+            { key: 'low', title: '52 Week Low', displayTitle: msg('indicator.n52WeekHighLow.plot.low', '52-Week Low'), values: lo, kind: 'step', color: str(inputs, 'lowColor', BEARISH), width: 2 },
         ];
         if (bool(inputs, 'showAllTime', false)) {
             const ink = str(inputs, 'allTimeColor', NEUTRAL);

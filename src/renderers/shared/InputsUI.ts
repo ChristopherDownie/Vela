@@ -142,10 +142,10 @@ const LEGEND_CTL_CSS =
 const LEGEND_ROW_MIN_H = LEGEND_CTL_PX + LEGEND_ROW_PAD_Y * 2;
 /** Menu ids of the one-step restacking entries (never numeric: the move menu's targets are). */
 const TEXT = {
-    moveToMainChart: msg('chart.legend.moveToMainChart', 'Move to Main chart'),
+    moveToMainChart: msg('chart.legend.moveToMainChart', 'Move to main chart'),
     moveToPane: msg('chart.legend.moveToPane', 'Move to {pane}'),
-    newPaneAbove: msg('chart.legend.newPaneAbove', 'New pane above'),
-    newPaneBelow: msg('chart.legend.newPaneBelow', 'New pane below'),
+    newPaneAbove: msg('chart.legend.newPaneAbove', 'New panel above'),
+    newPaneBelow: msg('chart.legend.newPaneBelow', 'New panel below'),
     indicatorValues: msg('chart.legend.indicatorValues', 'Indicator values'),
     bringInFrontOfPrice: msg('chart.legend.bringInFrontOfPrice', 'Bring in front of price'),
     bringInFrontOf: msg('chart.legend.bringInFrontOf', 'Bring in front of {indicator}'),
@@ -160,7 +160,7 @@ const TEXT = {
     hide: msg('chart.legend.hide', 'Hide'),
     show: msg('chart.legend.show', 'Show'),
     settings: msg('chart.legend.settings', 'Settings'),
-    moveToPaneButton: msg('chart.legend.moveToPaneButton', 'Move to pane'),
+    moveToPaneButton: msg('chart.legend.moveToPaneButton', 'Move to panel'),
     remove: msg('chart.legend.remove', 'Remove indicator'),
 };
 

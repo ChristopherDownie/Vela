@@ -96,7 +96,7 @@ export const vpvrDescriptor: NativeIndicatorDescriptor = {
             min: 5,
             max: 90,
             step: 1,
-            tooltip: msg('indicator.vpvr.widthPct.tooltip', 'Pane width the largest row occupies'),
+            tooltip: msg('indicator.vpvr.widthPct.tooltip', 'Panel width the largest row occupies.'),
         }),
         localizeInput({ key: 'upColor', title: msg('indicator.vpvr.upColor', 'Up color'), type: 'color', defval: DEFAULT_UP }),
         localizeInput({ key: 'downColor', title: msg('indicator.vpvr.downColor', 'Down color'), type: 'color', defval: DEFAULT_DOWN }),
