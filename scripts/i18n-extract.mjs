@@ -15,6 +15,9 @@ import ts from 'typescript';
 
 const ID_PATTERN = /^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9]+)+$/;
 
+/** The repository root, as a native path. */
+export const repoRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
+
 function sourceFiles(dir) {
     const out = [];
     for (const name of readdirSync(dir)) {
@@ -105,7 +108,8 @@ export function checkGenerated(root) {
     for (const [rel, content] of Object.entries(files)) {
         let current = null;
         try {
-            current = readFileSync(join(root, rel), 'utf8');
+            // A checkout with `core.autocrlf` holds CRLF; the generated content is LF.
+            current = readFileSync(join(root, rel), 'utf8').replace(/\r\n/g, '\n');
         } catch {
             current = null;
         }
@@ -139,8 +143,7 @@ function printCoverage(root) {
 }
 
 function main() {
-    const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
-    const { errors, stale, files } = checkGenerated(root);
+    const { errors, stale, files } = checkGenerated(repoRoot);
     if (errors.length) {
         for (const e of errors) console.error(e);
         process.exit(1);
@@ -148,14 +151,14 @@ function main() {
     if (process.argv.includes('--check')) {
         for (const rel of stale) console.error(`${rel} is out of date: run \`npm run i18n:extract\`.`);
         if (stale.length) process.exit(1);
-        printCoverage(root);
+        printCoverage(repoRoot);
         return;
     }
     for (const rel of stale) {
-        writeFileSync(join(root, rel), files[rel]);
+        writeFileSync(join(repoRoot, rel), files[rel]);
         console.log(`wrote ${rel}`);
     }
-    printCoverage(root);
+    printCoverage(repoRoot);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
