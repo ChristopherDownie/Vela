@@ -2,7 +2,7 @@
 
 All notable changes to Vela, newest first.
 
-## [Unreleased]
+## [0.9.0]
 
 ### Added
 
@@ -60,6 +60,11 @@ All notable changes to Vela, newest first.
   `@luxalgo/vela/ui`, keep working and keep returning English. Format through a chart's
   `i18n.format` instead, and read the picker's names from its controller, which follows the
   `i18n` option.
+- **Contributed labels are typed as messages.** The labels, titles and tooltips you register
+  (actions, side panels, legend actions, chart-type settings and the like) are now typed
+  `MessageLike`: a plain string or a `msg()`. Registering plain strings works as before.
+  _(Breaking: code that reads such a field back and treats it as a string, for example a
+  `legendActions()` tooltip, no longer type-checks. Resolve it with `ctx.i18n.t()` first.)_
 
 ### Fixed
 
