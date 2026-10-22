@@ -4,8 +4,55 @@ All notable changes to Vela, newest first.
 
 ## [Unreleased]
 
+### Added
+
+- **Charts that speak your users' language.** A chart, a workspace and the widget take a
+  `locale`, and `setLocale()` switches it at runtime without re-running indicators, then
+  emits `locale:changed`. The price and time axes, the crosshair, the last-price label and
+  its countdown, the legend and the data window format their numbers and dates for the
+  locale, with its separators, month names and abbreviations, while keeping Western digits,
+  the Gregorian calendar and a 24-hour clock in every language unless you choose otherwise
+  (`numberingSystem`, `hourCycle`). The date picker names months and weekdays in the locale
+  and starts its weeks on the locale's first day (`weekStart`). Interface text comes from
+  locale packs you register with `registerLocale()`, and anything a pack leaves out reads in
+  English; `messages` rewords any message, and `formatters` replaces any number or date
+  format. `direction: 'rtl'` or `'auto'` marks the chrome right to left, while the plot keeps
+  time running left to right with the price axis on the right. Plugins declare their own text
+  with `msg()` and read the chart's translator as `ctx.i18n`, and in renderer layers as
+  `args.i18n`. With none of these options set, a chart looks exactly as before. The new
+  Localization guide covers it all.
+- **The whole chart interface can be translated.** The top and bottom bars, menus, dialogs and
+  panels, the built-in indicators with their inputs and plots, the drawing tools with their
+  settings and on-chart labels, the chart settings, time zone names, keyboard shortcut names,
+  toasts and the names screen readers announce all read from locale packs now, and a
+  language switch relabels what is on screen at once. The status line and the bottom bar's
+  clock format their numbers for the locale. Saved layouts keep their values in English, so
+  a layout opens the same in every language. The labels you contribute (actions, side
+  panels, legend actions and callouts, layouts, key bindings, indicator inputs) accept
+  messages too, while what you read back, such as `buildToolbar()` and `layouts()`, stays
+  plain text in the language of the translator you pass.
+
+### Changed
+
+- **The English-only formatting helpers are deprecated.** `fmtPrice` and `fmtChange` from
+  `@luxalgo/vela/widget`, and the date picker's `MONTH_LABELS` and `WEEKDAY_LABELS` from
+  `@luxalgo/vela/ui`, keep working and keep returning English. Format through a chart's
+  `i18n.format` instead, and read the picker's names from its controller, which follows the
+  `i18n` option.
+
 ### Fixed
 
+- **Keyboard shortcuts work on every keyboard layout.** On a layout of another script, such
+  as Russian, Greek or Arabic, the chart's shortcuts did nothing: Ctrl+Z typed `я` and never
+  undid. They now follow the physical key there, while Latin layouts keep their own letters.
+  Typing a letter of any script on the chart opens symbol search, and keystrokes an input
+  method is composing no longer open it.
+- **Text in Thai, Chinese or Japanese wraps inside drawings.** A note or box label written in
+  a script without spaces ran past its box as one line; it now wraps between words. Long
+  alerts in the alerts menu and a mark's letters are cut between characters, never through
+  one.
+- **Measurements of a single bar say "1 bar".** The measure tool, the ruler and the info line
+  read "1 bars" for a one-bar span.
 - **Charts keep numbers in reading order inside right-to-left pages.** On a page that reads
   right to left, such as an Arabic or Hebrew app, the chart moved signs and percent signs to
   the far end of their numbers: the price scale read `7.14%-`, the status line

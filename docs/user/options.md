@@ -71,6 +71,27 @@ chart.data.registerProvider('binance', new BinanceProvider());
 
 \* `defaultLanguage` falls back to the first injected engine's language if you don't set it.
 
+## Localization options
+
+Language, direction, and the formatting of chart numbers and dates. All of them change at
+runtime through `chart.setLocale(...)`; the [Localization guide](./localization.md) covers
+each in depth.
+
+| Option | Type | Default | Notes |
+|---|---|---|---|
+| `locale` | string | `'en'` | BCP 47 tag for interface text, numbers and dates (`'de'`, `'pt-BR'`, `'zh-Hant'`). Register the matching pack with `registerLocale` for translated text. |
+| `direction` | `'ltr' \| 'rtl' \| 'auto'` | `'ltr'` | Direction of the chrome; `'auto'` follows the locale's script. The plot never mirrors. Sets `dir` on the chart's root element once given. |
+| `messages` | `{ [id]: string }` | — | Your own text for any message id, on top of the registered packs (typed ids). |
+| `numberingSystem` | `'latn' \| 'locale' \| string` | `'latn'` | Digits of chart numbers: Western in every language unless you pick `'locale'` or a numbering system id (`'arab'`, `'deva'`, …). |
+| `hourCycle` | `'h23' \| 'h12' \| 'locale'` | `'h23'` | Clock of chart times. |
+| `weekStart` | `0 \| 1 \| 6` | the locale's | First day of the week in date pickers (Sunday, Monday, Saturday). |
+| `formatters` | `{ price?, percent?, compact?, timeTick?, timeStamp?, duration? }` | built-in | Replace any chart formatter; each receives `ctx.fallback()`, the built-in result. |
+
+```js
+const chart = new Vela('#chart', { data: myBars, locale: 'ar', direction: 'auto' });
+chart.setLocale({ locale: 'he' }); // re-renders in place and emits locale:changed
+```
+
 Leave `renderer` off for the built-in native backend; a custom renderer class (implementing `IChartRenderer`) can be passed to swap the whole rendering backend.
 
 ### The `drawings` option
