@@ -34,6 +34,13 @@ export default defineConfig([
         sourcemap: false,
         clean: true,
         treeshake: true,
+        // Write non-ASCII text as UTF-8 rather than `\uXXXX` escapes, which roughly double the
+        // size of a locale pack in a non-Latin script. Module files are read as UTF-8 by Node
+        // and by bundlers; the script-tag builds below keep ASCII output, since a page that is
+        // not UTF-8 would decode them in its own charset.
+        esbuildOptions(options) {
+            options.charset = 'utf8';
+        },
     },
     // Browser globals — self-contained IIFEs exposing `window.Vela`, in the reference
     // dev/prod pair: `vela.global.js` is the readable development build,

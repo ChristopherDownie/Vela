@@ -30,7 +30,9 @@ export function languageOf(tag: string): string {
  * The tags message lookup tries, most specific first, ending in English: `pt-BR` →
  * `pt-BR`, `pt`, `en`; `zh-TW` → `zh-TW`, `zh-Hant`, `zh`, `en`; `es-MX` → `es-MX`,
  * `es`, `en`. A region that implies a script slots `language-Script` in before the bare
- * language, so a `zh-Hant` pack serves Taiwan and Hong Kong.
+ * language, so a `zh-Hant` pack serves Taiwan and Hong Kong. After the bare language comes
+ * the region it stands for (its likely subtags: `pt` is Brazil's, `zh` is China's), when that
+ * region writes the same script, so a `pt-BR` pack serves `pt` and `pt-PT` before English.
  */
 export function fallbackChain(tag: string): string[] {
     const out: string[] = [];
@@ -56,6 +58,12 @@ export function fallbackChain(tag: string): string[] {
             add(parts.slice(0, i).join('-'));
         }
         if (impliedScript && !loc.region) add(`${loc.language}-${impliedScript}`);
+        try {
+            const usual = new Intl.Locale(loc.language).maximize();
+            if (usual.region && usual.script === (loc.script ?? impliedScript)) add(`${loc.language}-${usual.region}`);
+        } catch {
+            /* no likely subtags on this engine: the language's own packs and English only */
+        }
     }
     add('en');
     return out;

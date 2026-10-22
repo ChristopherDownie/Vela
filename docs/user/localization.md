@@ -2,8 +2,9 @@
 
 Vela renders in English by default. Set a locale and the chart formats its numbers and
 dates for that locale, reads its interface text from the locale packs you register, and can
-lay out its chrome right to left. With no localization options set, a chart looks and
-behaves exactly as it always has.
+lay out its chrome right to left. Vela publishes packs for the
+[languages listed below](#use-a-shipped-language), and you can add your own. With no
+localization options set, a chart looks and behaves exactly as it always has.
 
 Localization works the same on a bare chart (`new Vela(...)`), a
 [workspace](./workspace.md) and the deprecated widget: every one of them takes the options
@@ -80,6 +81,85 @@ ws.setLocale('ko'); // every cell, the shared panels, and cells a later layout c
 - **The page:** the chart's root element carries `lang` once you set a locale, and `dir` once
   you set a direction. Without them the attributes stay off and your page decides.
 
+## Use a shipped language
+
+Vela publishes a locale pack for each of these 19 languages, each imported as
+`@luxalgo/vela/locales/<tag>`:
+
+| Language | Native name | Tag |
+|---|---|---|
+| Arabic | العربية | `ar` |
+| Chinese (Simplified) | 简体中文 | `zh-Hans` |
+| Chinese (Traditional) | 繁體中文 | `zh-Hant` |
+| French | Français | `fr` |
+| German | Deutsch | `de` |
+| Hebrew | עברית | `he` |
+| Hindi | हिन्दी | `hi` |
+| Indonesian | Bahasa Indonesia | `id` |
+| Italian | Italiano | `it` |
+| Japanese | 日本語 | `ja` |
+| Korean | 한국어 | `ko` |
+| Malay | Bahasa Melayu | `ms` |
+| Polish | Polski | `pl` |
+| Portuguese (Brazil) | Português (Brasil) | `pt-BR` |
+| Russian | Русский | `ru` |
+| Spanish | Español | `es` |
+| Thai | ภาษาไทย | `th` |
+| Turkish | Türkçe | `tr` |
+| Vietnamese | Tiếng Việt | `vi` |
+
+Each pack covers the whole interface: the chrome, the built-in indicators, the
+drawing tools, the chart settings and the time zone names. Names stay as written in every
+language: Vela, LuxAlgo, PineTS, Pine Script®, tickers, and the indicators the trading
+literature knows by their English name. Numbers keep Western digits.
+
+Import a pack, register it, and switch to its locale:
+
+```ts
+import { registerLocale } from '@luxalgo/vela/plugin';
+import es from '@luxalgo/vela/locales/es';
+
+registerLocale(es);
+chart.setLocale('es');
+```
+
+Importing a pack never registers it. Each pack is its own entry point, so a page loads only
+the languages it imports. To load a language when the user picks it:
+
+```ts
+const { default: pack } = await import('@luxalgo/vela/locales/ru');
+registerLocale(pack);
+ws.setLocale(pack.locale);
+```
+
+The Arabic and Hebrew packs carry `direction: 'rtl'`. Pass `direction: 'auto'` with their
+locale and the chrome mirrors, while the plot keeps reading left to right; see
+[Right to left](#right-to-left):
+
+```ts
+import ar from '@luxalgo/vela/locales/ar';
+
+registerLocale(ar);
+chart.setLocale({ locale: 'ar', direction: 'auto' });
+```
+
+You can pass the browser's own language tag (`navigator.language`) as it is: a regional tag
+reads the closest pack you registered. `zh-CN` and `zh-SG` read Simplified Chinese, `zh-TW`,
+`zh-HK` and `zh-MO` Traditional Chinese, `es-MX` and `es-419` Spanish, `pt` and `pt-PT`
+Brazilian Portuguese, `ar-EG` Arabic, and the legacy tags `iw` and `in` read Hebrew and
+Indonesian. Numbers and dates still follow the tag itself, so `pt-PT` keeps Portugal's
+formats.
+
+With a pack active, the indicator picker finds an indicator by its translated name, by its
+English name and by its short name, so a search for "Relative Strength" or "RSI" works in
+every language.
+
+The translations are machine-drafted, then checked in an independent review pass. If a
+word reads wrong in your language, corrections are welcome: open a pull request against the
+language's file in `src/locales/` (for example `src/locales/es.json`). To reword a message
+in your own app instead, use [`messages`](#override-any-string), or register your own pack
+for the same locale after Vela's: for the same message, the pack registered last wins.
+
 ## Add your own language
 
 A locale pack is one plain object: a locale tag and its messages, keyed by message id.
@@ -89,15 +169,15 @@ Register it before you switch to its locale:
 import { registerLocale } from '@luxalgo/vela/plugin';
 
 const off = registerLocale({
-    locale: 'de',
+    locale: 'nl',
     messages: {
-        'widget.shortcuts.title': 'Tastenkürzel',
-        'widget.shortcuts.mouse': 'Maus',
-        'ui.datePicker.nextMonth': 'Nächster Monat',
+        'widget.shortcuts.title': 'Sneltoetsen',
+        'widget.shortcuts.mouse': 'Muis',
+        'ui.datePicker.nextMonth': 'Volgende maand',
     },
 });
 
-chart.setLocale('de');
+chart.setLocale('nl');
 // Later, to remove the pack again:
 off();
 ```
@@ -105,8 +185,11 @@ off();
 Registration is always a call: importing a pack never registers it. A pack only needs the
 messages it translates. A message missing from a pack falls back through the locale's
 parents to English: `pt-BR` reads `pt-BR`, then `pt`, then English; `zh-TW` reads `zh-TW`,
-then `zh-Hant`, then `zh`. Several packs can share a locale (Vela's, a plugin's, your own);
-for the same message, the pack registered last wins.
+then `zh-Hant`, then `zh`. After the bare language comes the region it usually means, when
+that region writes the same script: `pt-PT` reads `pt-PT`, `pt`, then `pt-BR`; `zh` reads
+`zh-Hans`, then `zh-CN`. Legacy tags read as their current ones (`iw` as `he`, `in` as `id`).
+Several packs can share a locale (Vela's, a plugin's, your own); for the same message, the
+pack registered last wins.
 
 Start a translation from the English reference pack, which lists every message id with its
 English text:
@@ -115,14 +198,6 @@ English text:
 import en from '@luxalgo/vela/locales/en';
 
 console.log(en.messages); // { 'ui.datePicker.chooseMonth': 'Choose month', … }
-```
-
-Locale packs are published as separate entry points (`@luxalgo/vela/locales/<tag>`), so a
-page loads only the languages it imports. Load one when the user picks it:
-
-```ts
-const { default: pack } = await import('@luxalgo/vela/locales/en');
-registerLocale(pack);
 ```
 
 ### Message syntax
@@ -298,3 +373,12 @@ It collects every `msg()` call into `src/locales/en.json`, the English catalog t
 start from, and into `src/locales/catalog.d.ts`, the type that checks message ids. The tests
 fail when either file is out of date, or when a pack under `src/locales/` names an unknown
 message or changes a message's arguments.
+
+The shipped packs live beside it, one `<tag>.json` of messages and one `<tag>.ts` entry point
+per language; the build publishes each as `@luxalgo/vela/locales/<tag>`. You don't need to
+translate the text you add: a message a pack lacks reads in English until a translation
+lands, and `npm run i18n:check` lists how many messages each pack translates. The pack tests
+fail when a pack names an unknown message, when one of its messages doesn't parse, takes
+other values than the English, lacks a plural form its language needs, drops a product name
+or writes other digits than 0 to 9, and when a workspace in a shipped language shows English
+that comes from no message at all.

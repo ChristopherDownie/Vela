@@ -5,7 +5,9 @@
 //   node scripts/i18n-extract.mjs          write both files
 //   node scripts/i18n-extract.mjs --check  fail when either file is out of date
 //
-// Both arguments of `msg()` must be string literals; anything else is reported.
+// Both arguments of `msg()` must be string literals; anything else is reported. Both modes
+// then list how many messages each pack under src/locales/ translates. That line is
+// information only: a message a pack lacks reads in English.
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -112,6 +114,30 @@ export function checkGenerated(root) {
     return { errors, stale, files };
 }
 
+/** How much of the English catalog each shipped pack translates: `[{ tag, translated, total }]`.
+ *  Information only: a message a pack lacks reads in English. */
+export function packCoverage(root) {
+    const dir = join(root, 'src/locales');
+    const english = JSON.parse(readFileSync(join(dir, 'en.json'), 'utf8'));
+    const total = Object.keys(english).length;
+    return readdirSync(dir)
+        .filter((name) => name.endsWith('.json') && name !== 'en.json')
+        .sort()
+        .map((name) => {
+            const pack = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+            const translated = Object.keys(pack).filter((id) => id in english).length;
+            return { tag: name.slice(0, -'.json'.length), translated, total };
+        });
+}
+
+function printCoverage(root) {
+    const rows = packCoverage(root);
+    if (!rows.length) return;
+    console.log('Locale packs (messages translated / English messages):');
+    const width = Math.max(...rows.map((r) => r.tag.length));
+    for (const { tag, translated, total } of rows) console.log(`  ${tag.padEnd(width)}  ${translated} / ${total}${translated < total ? `  (${total - translated} read in English)` : ''}`);
+}
+
 function main() {
     const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
     const { errors, stale, files } = checkGenerated(root);
@@ -122,12 +148,14 @@ function main() {
     if (process.argv.includes('--check')) {
         for (const rel of stale) console.error(`${rel} is out of date: run \`npm run i18n:extract\`.`);
         if (stale.length) process.exit(1);
+        printCoverage(root);
         return;
     }
     for (const rel of stale) {
         writeFileSync(join(root, rel), files[rel]);
         console.log(`wrote ${rel}`);
     }
+    printCoverage(root);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

@@ -31,6 +31,18 @@ All notable changes to Vela, newest first.
   panels, legend actions and callouts, layouts, key bindings, indicator inputs) accept
   messages too, while what you read back, such as `buildToolbar()` and `layouts()`, stays
   plain text in the language of the translator you pass.
+- **Ready-made translations in 19 languages.** Import a language pack from
+  `@luxalgo/vela/locales/<tag>`, register it with `registerLocale()` and set the locale: the
+  whole interface reads in Arabic, Chinese (Simplified and Traditional), French, German,
+  Hebrew, Hindi, Indonesian, Italian, Japanese, Korean, Malay, Polish, Brazilian Portuguese,
+  Russian, Spanish, Thai, Turkish or Vietnamese, with product names, tickers and Western
+  digits kept as they are. Arabic and Hebrew mirror the chrome with `direction: 'auto'`
+  while the plot keeps reading left to right. A page loads only the languages it imports,
+  and a browser's regional tag reads the closest one: `zh-TW` reads Traditional Chinese,
+  `pt-PT` Brazilian Portuguese, `es-MX` Spanish. The indicator picker finds an indicator by
+  its short name, such as RSI, and in a translated interface by its English name too. The
+  translations are machine-drafted, then checked in an independent review pass;
+  corrections are welcome as pull requests.
 
 ### Changed
 
