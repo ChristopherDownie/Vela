@@ -2,6 +2,16 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Added
+
+- **Scale price chart only.** A new option in the price axis's right-click menu (and the
+  Scales and lines settings tab) fits the price scale to the candles alone, so an indicator
+  that plots far from price no longer squashes the chart; its plots and drawings stay where
+  they are and simply run off the edge. Set it in code with the `scalePriceOnly` feature; it
+  is saved with the chart settings.
+
 ## [0.9.0]
 
 ### Added
