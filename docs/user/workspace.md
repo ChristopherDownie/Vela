@@ -306,7 +306,8 @@ const state = ws.getState();
 // stay-in-drawing-mode — shared by every chart of the workspace, like the favorite stars.
 // One ORDERED `charts` entry per cell, live AND dormant — array position i restores
 // into slot i, `id` is the cell's durable name: { id: 'btc', symbol, provider?, timeframe,
-//   priceStyle, bars?, watermark?, indicatorTitles?, rendererConfig (renderer.getConfig() document),
+//   priceStyle, bars?, watermark?, indicatorTitles?, statuslineParts? ({ logo?, name?, market?,
+//   ohlc?, change? }: the status line's segments), rendererConfig (renderer.getConfig() document),
 //   drawings (drawings.toJSON() document), indicators: { manifest: string[], natives: string[] },
 //   ext? (third-party per-chart state, by namespaced key) }
 // `ext` bags (document root and per chart) carry PLUGIN state — written and restored by
