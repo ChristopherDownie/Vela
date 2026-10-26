@@ -2,6 +2,15 @@
 
 All notable changes to Vela, newest first.
 
+## [Unreleased]
+
+### Fixed
+
+- **The status line keeps the parts you choose.** Turning the symbol name, market status,
+  OHLC values, bar change values or symbol logo on or off, from the chart settings' Status
+  line tab or the status line's right-click menu, now saves with the chart, so a reload or
+  a saved layout brings the status line back as you left it.
+
 ## [0.9.0]
 
 ### Added
