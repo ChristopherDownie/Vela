@@ -4,7 +4,13 @@ All notable changes to Vela, newest first.
 
 ## [Unreleased]
 
-### Fixed
+### Added
+
+- **Scale price chart only.** A new option in the price axis's right-click menu (and the
+  Scales and lines settings tab) fits the price scale to the candles alone, so an indicator
+  that plots far from price no longer squashes the chart; its plots and drawings stay where
+  they are and simply run off the edge. Set it in code with the `scalePriceOnly` feature; it
+  is saved with the chart settings.
 
 - **The status line keeps the parts you choose.** Turning the symbol name, market status,
   OHLC values, bar change values or symbol logo on or off, from the chart settings' Status

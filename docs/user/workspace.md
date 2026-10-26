@@ -549,7 +549,7 @@ they work from the very first keystroke, before any click.
   whole workspace back to that zone.
 - **Context menus** — right-click the chart body for reset view, removing all drawings or all
   indicators, and the settings dialog; the price axis for that pane's own scale (autoscale,
-  invert, regular/percent/indexed/logarithmic, and the label and level toggles); the time axis
+  scale price chart only on the main price scale, invert, regular/percent/indexed/logarithmic, and the label and level toggles); the time axis
   for the display timezone. Every pane's price scale has its own menu, so a study pane's scale
   is independent of the main one. Each menu's settings entry opens the settings dialog on the
   tab that belongs to it — Canvas from the chart body, Scales and lines from either axis.
