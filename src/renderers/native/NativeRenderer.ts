@@ -75,7 +75,7 @@ import { createProjector } from './drawings/Projector';
 import type { Projector, SnapMode } from '../../core/drawings';
 import type { IDrawingsRendererPort } from '../../core/drawings';
 import { formatPriceLabel, tickDecimals } from './chrome/ticks';
-import { zonedDate } from './chrome/tz';
+import { displayZone, zonedDate } from './chrome/tz';
 import { computePaneScale, expandScaleByPixels, overlaySeriesRange } from './core/autoscale';
 import { mergeTradeMarkersState, tradesPriceHints, type TradeMarkerHints } from '../shared/trade-markers';
 import { markGroupOwnVisible, markGroupVisible, mergeMarksState } from '../shared/marks-state';
@@ -3286,7 +3286,7 @@ export class NativeRenderer implements IChartRenderer {
         const pricePane = this.dataWindowPricePane();
         const ohlc = this.dataWindowOHLC(bar, pricePane);
         const parts: string[] = [];
-        if (bar) parts.push(formatStamp(bar.time, this.scene.timezone));
+        if (bar) parts.push(formatStamp(bar.time, displayZone(this.scene.timezone, this.coords.barInterval)));
         if (ohlc) parts.push(this.t(TEXT.barSummary, { open: ohlc.o, high: ohlc.h, low: ohlc.l, close: ohlc.c }));
         for (const group of this.dataWindowGroups(idx, pricePane)) {
             for (const row of group.rows) parts.push(this.t(TEXT.valueSummary, { name: row.label, value: row.value }));
@@ -3304,7 +3304,7 @@ export class NativeRenderer implements IChartRenderer {
         const idx = this.hoverLogical != null ? this.hoverLogical : n - 1;
         const bar = this.bars[idx];
         const pricePane = this.dataWindowPricePane();
-        const parts = bar ? formatStampParts(bar.time, this.scene.timezone) : { date: '', time: '' };
+        const parts = bar ? formatStampParts(bar.time, displayZone(this.scene.timezone, this.coords.barInterval)) : { date: '', time: '' };
         return { date: parts.date, time: parts.time, ohlc: this.dataWindowOHLC(bar, pricePane), groups: this.dataWindowGroups(idx, pricePane) };
     }
 
