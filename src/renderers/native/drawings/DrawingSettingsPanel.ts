@@ -762,9 +762,9 @@ export class DrawingSettingsPanel {
             rows.push(row(this.t(TEXT.style), ...this.textStyling(b, has)));
             if (LINE_LABEL_TYPES.has(type) && has('text.value')) {
                 const level = LEVEL_LINE_TYPES.has(type);
-                // A ray's label starts at its anchor; a horizontal line's, until a position is
-                // picked, stays beside its handle (none of the three is pressed).
-                const defaultPlace = type === 'hline' ? undefined : type === 'hray' ? 'start' : 'middle';
+                // A horizontal line's or ray's label starts at its left end; a two-point line's
+                // sits in the middle.
+                const defaultPlace = level ? 'start' : 'middle';
                 const place = row(
                     this.t(TEXT.place),
                     this.seg(b, this.t(TEXT.positionAlongTheLine), [

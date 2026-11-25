@@ -555,8 +555,8 @@ export class DrawingPainter {
         ctx.textAlign = layout.align;
         const lh = labelLineHeight(fs);
         const lines = text.value.split('\n');
-        // A horizontal line's or ray's label stays whole on the chart: one beside a handle that
-        // scrolled off, or near an edge, slides back in rather than being cut off.
+        // A horizontal line's or ray's label stays whole on the chart: one near an edge slides
+        // back in rather than being cut off.
         if (d.type === 'hline' || d.type === 'hray') layout.x = keepLabelInside(layout.x, layout.align, Math.max(...lines.map((l) => ctx.measureText(l).width)), proj.width);
         // A halo in the chart background keeps the words readable where a line (its own, or
         // another drawing's) runs through them. Free text and a box's centered label sit clear
@@ -2007,7 +2007,7 @@ function labelLayout(d: Drawing, proj: Projector): {
             // `side` puts the label under the line instead of over it. `place` pins it to the
             // left end, the middle or the right end of what shows of the line: a line spans the
             // whole chart, a ray runs from its anchor (or the chart's left edge) to the right
-            // edge. A line's label without a `place` stays beside its handle, as it always has.
+            // edge. Without a `place`, the label starts at the left end.
             // The label flips to the other side when its own would cut it off at the pane's top
             // or bottom and the other side has the room.
             const blockH = lh * lines;
@@ -2019,15 +2019,13 @@ function labelLayout(d: Drawing, proj: Projector): {
             const top = text.side === 'below' ? (fitsBelow || !fitsAbove ? below : above) : fitsAbove || !fitsBelow ? above : below;
             const left = d.type === 'hline' ? 0 : Math.max(0, ax);
             const right = proj.width;
-            switch (text.place ?? (d.type === 'hray' ? 'start' : undefined)) {
-                case 'start':
-                    return { x: left + LEVEL_LABEL_INSET, top, align: 'left' };
+            switch (text.place) {
                 case 'middle':
                     return { x: (left + right) / 2, top, align: 'center' };
                 case 'end':
                     return { x: right - LEVEL_LABEL_INSET, top, align: 'right' };
                 default:
-                    return { x: ax + LEVEL_LABEL_INSET, top, align: 'left' };
+                    return { x: left + LEVEL_LABEL_INSET, top, align: 'left' };
             }
         }
         case 'trendline':

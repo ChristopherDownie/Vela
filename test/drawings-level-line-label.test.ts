@@ -67,15 +67,8 @@ describe("a horizontal line's label", () => {
         expect(paintLabel('hline', 250, { place: 'end' })).toMatchObject({ x: 392, align: 'right' });
     });
 
-    it('stays beside its handle until a position is picked', () => {
-        expect(paintLabel('hline', 250, {})).toMatchObject({ x: 258, align: 'left' });
-    });
-
-    // "Weekly support" is 84px wide at the test's 6px a glyph.
-    it('beside its handle, stays whole on the chart when the handle nears an edge or scrolls off', () => {
-        expect(paintLabel('hline', -500, {})).toMatchObject({ x: 8, align: 'left' });
-        expect(paintLabel('hline', 380, {})).toMatchObject({ x: 308, align: 'left' });
-        expect(paintLabel('hline', 900, {})).toMatchObject({ x: 308, align: 'left' });
+    it('starts at the left edge until a position is picked, wherever its handle is', () => {
+        for (const handle of [-500, 250, 380, 900]) expect(paintLabel('hline', handle, {}), String(handle)).toMatchObject({ x: 8, align: 'left' });
     });
 
     it('sits above the line, or below it when asked', () => {
@@ -115,6 +108,7 @@ describe("a horizontal ray's label", () => {
         expect(paintLabel('hray', -300, { place: 'middle' })).toMatchObject({ x: 200, align: 'center' });
     });
 
+    // "Weekly support" is 84px wide at the test's 6px a glyph.
     it('stays whole on the chart when the anchor is near the right edge', () => {
         expect(paintLabel('hray', 380, {})).toMatchObject({ x: 308, align: 'left' });
         expect(paintLabel('hray', 380, { place: 'middle' })).toMatchObject({ x: 350, align: 'center' });

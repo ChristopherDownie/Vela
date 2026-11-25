@@ -33,7 +33,7 @@ export interface DrawingText {
     bold?: boolean;
     italic?: boolean;
     /** Where a line's label sits along it (line tools). Absent: the middle of a two-point line,
-     *  the start of a horizontal ray, beside a horizontal line's handle. */
+     *  the left end of a horizontal line or ray. */
     place?: 'start' | 'middle' | 'end';
     /** Which side of the line its label sits on (line tools); absent = above. */
     side?: 'above' | 'below';

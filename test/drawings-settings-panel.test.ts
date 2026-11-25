@@ -156,8 +156,8 @@ describe('the drawing settings panel', () => {
                 s.$$<HTMLButtonElement>('.vela-dsp-seg[aria-label="Position along the line"] button')
                     .filter((b) => b.getAttribute('aria-pressed') === 'true')
                     .map((b) => b.textContent ?? '');
-            // A ray's label starts at its anchor; a line's stays by its handle until one is picked.
-            expect(pressed(), kind).toEqual(kind === 'hray' ? ['Left'] : []);
+            // Both start at the left end until another position is picked.
+            expect(pressed(), kind).toEqual(['Left']);
             s.segButton('Position along the line', 'Right').click();
             s.segButton('Side of the line', 'Below').click();
             expect(s.live().text, kind).toMatchObject({ place: 'end', side: 'below' });
